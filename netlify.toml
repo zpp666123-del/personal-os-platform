@@ -14,6 +14,18 @@
   to = "/styles.css"
   status = 200
 [[redirects]]
+  from = "/u/supabase-config.js"
+  to = "/supabase-config.js"
+  status = 200
+[[redirects]]
+  from = "/u/supabase-client.js"
+  to = "/supabase-client.js"
+  status = 200
+[[redirects]]
+  from = "/u/supabase-api.js"
+  to = "/supabase-api.js"
+  status = 200
+[[redirects]]
   from = "/u/data.js"
   to = "/data.js"
   status = 200
@@ -26,11 +38,47 @@
   to = "/styles.css"
   status = 200
 [[redirects]]
+  from = "/resume/supabase-config.js"
+  to = "/supabase-config.js"
+  status = 200
+[[redirects]]
+  from = "/resume/supabase-client.js"
+  to = "/supabase-client.js"
+  status = 200
+[[redirects]]
+  from = "/resume/supabase-api.js"
+  to = "/supabase-api.js"
+  status = 200
+[[redirects]]
   from = "/resume/data.js"
   to = "/data.js"
   status = 200
 [[redirects]]
   from = "/resume/app.js"
+  to = "/app.js"
+  status = 200
+[[redirects]]
+  from = "/studio/styles.css"
+  to = "/styles.css"
+  status = 200
+[[redirects]]
+  from = "/studio/supabase-config.js"
+  to = "/supabase-config.js"
+  status = 200
+[[redirects]]
+  from = "/studio/supabase-client.js"
+  to = "/supabase-client.js"
+  status = 200
+[[redirects]]
+  from = "/studio/supabase-api.js"
+  to = "/supabase-api.js"
+  status = 200
+[[redirects]]
+  from = "/studio/data.js"
+  to = "/data.js"
+  status = 200
+[[redirects]]
+  from = "/studio/app.js"
   to = "/app.js"
   status = 200
 [[redirects]]

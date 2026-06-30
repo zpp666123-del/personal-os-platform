@@ -48,10 +48,13 @@
 
 ## 当前版本说明
 
-当前是静态前端 MVP，用 localStorage 模拟登录、资料、发布和线索。它适合公开展示、产品验证和 Demo 演示。真正商业化上线时，建议继续接入：
+当前是静态前端 MVP，已接入 Supabase Auth + Postgres。未配置 Supabase URL / anon key 时，会自动回退到 localStorage Demo，方便公开展示和产品验证。上线前请先运行 `docs/supabase-schema.sql` 并在 Vercel 配置：
 
-- Supabase / Postgres：存储用户、资料、草稿、发布版本、线索。
-- Clerk 或 Supabase Auth：真实登录与权限。
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+后续商业化可以继续接入：
+
 - Supabase Storage / Cloudflare R2：头像、项目图、PDF 简历。
 - Resend：联系表单邮件通知。
 - Vercel / Cloudflare：自定义域名和边缘部署。

@@ -7,7 +7,12 @@
   const glow = document.getElementById('cursorGlow');
   const OS = window.AbilityOSV7;
   let recordIndex = 0;
-  let syncTimer = null;
+  let saveTimer = null;
+  const runtime = {
+    db: null,
+    useSupabase: false,
+    hydrating: false
+  };
 
   const sections = [
     ['identity', '身份资料', '定位、城市、期望与 PDF'],
@@ -57,7 +62,7 @@
   const tag = (value) => `<span class="tag">${esc(value)}</span>`;
   const assetIcon = (type) => assetIcons[type] || assetIcons.default;
 
-  function loadDB() {
+  function loadLocalDB() {
     try {
       const raw = localStorage.getItem(OS.STORAGE_KEY);
       if (!raw) return clone(OS.SEED_DB);
@@ -69,55 +74,18 @@
     }
   }
 
-  function dbStamp(db) {
-    const dates = [
-      ...(db.profiles || []).flatMap((p) => [p.updatedAt, p.publishedAt]),
-      ...(db.leads || []).map((l) => l.createdAt)
-    ].map((x) => Date.parse(x || '') || 0);
-    return Math.max(0, ...dates);
-  }
-
-  function syncDB(db) {
-    if (location.protocol === 'file:') return;
-    clearTimeout(syncTimer);
-    const snapshot = clone(db);
-    syncTimer = setTimeout(() => {
-      fetch('/api/db', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(snapshot)
-      }).catch(() => {});
-    }, 300);
+  function loadDB() {
+    if (!runtime.db) runtime.db = loadLocalDB();
+    return runtime.db;
   }
 
   function saveDB(db, options = {}) {
+    runtime.db = db;
+    if (runtime.useSupabase) {
+      if (!options.localOnly) scheduleDraftSave();
+      return;
+    }
     localStorage.setItem(OS.STORAGE_KEY, JSON.stringify(db));
-    if (!options.localOnly) syncDB(db);
-  }
-
-  async function hydrateFromAPI() {
-    if (location.protocol === 'file:') return;
-    try {
-      const res = await fetch('/api/db', { headers: { Accept: 'application/json' } });
-      if (!res.ok) return;
-      const body = await res.json();
-      if (!body.db || !validDB(body.db)) return;
-      const local = loadDB();
-      if (dbStamp(body.db) > dbStamp(local)) {
-        saveDB(body.db, { localOnly: true });
-        render(false);
-      } else {
-        syncDB(local);
-      }
-    } catch (err) {}
-  }
-
-  function validDB(value) {
-    return value
-      && typeof value.version === 'string'
-      && Array.isArray(value.users)
-      && Array.isArray(value.profiles)
-      && Array.isArray(value.leads);
   }
 
   function currentUser(db = loadDB()) {
@@ -137,6 +105,117 @@
     row.draft = row.draft || clone(OS.DEFAULT_PROFILE);
     row.published = row.published || clone(row.draft);
     return row.draft;
+  }
+
+  function api() {
+    return window.AbilitySupabaseAPI;
+  }
+
+  function needsAuth(path = routePath()) {
+    return path === 'dashboard' || path === 'inbox' || path.startsWith('studio');
+  }
+
+  function upsertUser(user) {
+    if (!user) return;
+    const db = loadDB();
+    const row = {
+      id: user.id,
+      name: (user.email || 'user').split('@')[0],
+      email: user.email || '',
+      createdAt: user.created_at || new Date().toISOString()
+    };
+    const index = db.users.findIndex((x) => x.id === row.id);
+    if (index >= 0) db.users[index] = { ...db.users[index], ...row };
+    else db.users.push(row);
+    db.currentUserId = row.id;
+  }
+
+  function upsertProfile(row, options = {}) {
+    if (!row) return null;
+    const db = loadDB();
+    const index = db.profiles.findIndex((p) => p.id === row.id || p.handle === row.handle);
+    if (index >= 0) {
+      const existing = db.profiles[index];
+      db.profiles[index] = {
+        ...existing,
+        ...row,
+        published: row.published || existing.published,
+        publishedAt: row.publishedAt || existing.publishedAt
+      };
+    }
+    else db.profiles.push(row);
+    if (options.current) db.currentUserId = row.ownerId;
+    return index >= 0 ? db.profiles[index] : row;
+  }
+
+  async function loadRemoteWorkspace(options = {}) {
+    const service = api();
+    if (!service) return null;
+    const user = await service.getUser();
+    if (!user) return null;
+    upsertUser(user);
+    const row = upsertProfile(await service.loadMyProfile(OS.DEFAULT_PROFILE), { current: true });
+    const db = loadDB();
+    try {
+      db.leads = await service.loadMyLeads(row.id);
+    } catch (err) {
+      console.warn(err);
+      db.leads = [];
+    }
+    saveDB(db, { localOnly: true });
+    if (options.render !== false) render(false);
+    return row;
+  }
+
+  async function loadRemotePublished(handle, options = {}) {
+    const service = api();
+    if (!service) return null;
+    const row = await service.loadPublishedProfile(handle);
+    if (!row) return null;
+    upsertProfile(row);
+    saveDB(loadDB(), { localOnly: true });
+    if (options.render !== false) render(false);
+    return row;
+  }
+
+  async function hydrateFromSupabase() {
+    const service = api();
+    if (!service || runtime.hydrating || !(await service.isEnabled())) return;
+    runtime.useSupabase = true;
+    runtime.hydrating = true;
+    try {
+      const path = routePath();
+      if (path.startsWith('u/') || path.startsWith('resume/')) {
+        await loadRemotePublished(path.split('/')[1] || 'cj', { render: false });
+      }
+      const user = await service.getUser();
+      if (user) await loadRemoteWorkspace({ render: false });
+      else if (needsAuth(path)) navigate('login');
+      render(false);
+    } catch (err) {
+      console.warn(err);
+      runtime.useSupabase = false;
+      showToast('Supabase 暂不可用，已显示本地 Demo');
+    } finally {
+      runtime.hydrating = false;
+    }
+  }
+
+  function scheduleDraftSave() {
+    const service = api();
+    if (!service) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      try {
+        if (!(await service.getUser())) return;
+        const row = currentProfile(loadDB());
+        if (!row || !row.id) return;
+        upsertProfile(await service.saveDraft(row), { current: true });
+      } catch (err) {
+        console.warn(err);
+        showToast('草稿保存失败，请稍后重试');
+      }
+    }, 600);
   }
 
   function getPath(obj, path) {
@@ -210,7 +289,7 @@
 
   function appHeader(row, active) {
     return `
-      <header class="top-nav mature-nav app-nav" data-reveal>
+      <header class="top-nav mature-nav app-nav">
         <a class="brand-pill magnetic" href="#/home" aria-label="回到首页">
           <span class="brand-mark" aria-hidden="true"></span>
           <span>个人能力 OS</span>
@@ -226,13 +305,14 @@
         <div class="nav-actions">
           <button class="icon-btn magnetic" type="button" data-action="open-command" aria-label="打开命令台">⌘</button>
           <a class="top-cta magnetic" href="#/u/${esc(row.handle)}">公开页</a>
+          ${runtime.useSupabase ? '<button class="top-cta light magnetic" type="button" data-action="logout">退出</button>' : ''}
         </div>
       </header>`;
   }
 
   function marketingHeader(row, active) {
     return `
-      <header class="top-nav mature-nav marketing-nav" data-reveal>
+      <header class="top-nav mature-nav marketing-nav">
         <a class="brand-pill magnetic" href="#/home" aria-label="回到首页">
           <span class="brand-mark" aria-hidden="true"></span>
           <span>个人能力 OS</span>
@@ -253,7 +333,7 @@
 
   function readerHeader(row, p) {
     return `
-      <header class="reader-nav" data-reveal>
+      <header class="reader-nav">
         <a class="reader-brand" href="#/u/${esc(row.handle)}" aria-label="公开主页顶部">
           <span class="avatar mini">${esc(p.identity.avatar || p.identity.name.slice(0, 2))}</span>
           <span><b>${esc(canShow(p, 'name') ? p.identity.name : '公开主页')}</b><small>${esc(p.identity.title || '个人能力主页')}</small></span>
@@ -283,7 +363,7 @@
     const footerText = options.mode === 'reader'
       ? '公开链接可直接分享给面试官、合作方或朋友阅读。'
       : '成熟产品方向：主页生成、资料治理、发布、线索与模板。';
-    const footer = options.noFooter ? '' : `<footer class="footer mature-footer"><b>个人能力 OS</b><span>${footerText}</span><span>V8 Productized · localStorage MVP</span></footer>`;
+    const footer = options.noFooter ? '' : `<footer class="footer mature-footer"><b>个人能力 OS</b><span>${footerText}</span><span>V8 Productized · ${runtime.useSupabase ? 'Supabase' : 'Demo'} MVP</span></footer>`;
     return `${header}${content}${footer}`;
   }
 
@@ -766,7 +846,7 @@
         <section id="contact" class="public-section contact-grid" data-reveal>
           <article class="contact-card tilt-card motion-card"><p class="section-kicker">Contact</p><h2>面试 / 合作入口。</h2><p>${esc(p.contact.note)}</p><p>${visibleValue(p,'email',p.identity.email,'public')}</p></article>
           <article class="contact-card">
-            <form class="contact-form" data-contact-form data-profile-id="${esc(row.id)}">
+            <form class="contact-form" data-contact-form data-profile-id="${esc(row.id)}" data-profile-handle="${esc(row.handle)}">
               <label class="field"><span>你的名字</span><input name="name" required /></label>
               <label class="field"><span>邮箱</span><input name="email" type="email" required /></label>
               <label class="field full"><span>联系目的</span><select name="intent">${p.contact.intents.map((x) => `<option>${esc(x)}</option>`).join('')}</select></label>
@@ -847,6 +927,7 @@
   }
 
   function loginPage() {
+    const demo = !runtime.useSupabase;
     return `
       <main class="auth-page">
         <a class="auth-logo" href="#/home"><span class="brand-mark"></span><b>个人能力 OS</b><small>Productized</small></a>
@@ -860,9 +941,9 @@
           <form class="login-card tilt-card motion-card" data-login-form>
             <p class="eyebrow">Login</p>
             <h2>进入你的 Profile Studio</h2>
-            <p class="muted">本地模拟登录。新邮箱会自动创建一个主页；访客看公开页不需要账号。</p>
-            <label class="field"><span>邮箱</span><input name="email" type="email" value="demo@ability.local" required /></label>
-            <label class="field"><span>密码</span><input name="password" type="password" value="demo123" required /></label>
+            <p class="muted">${demo ? '本地 Demo 登录。' : 'Supabase Auth 登录 / 注册。'}新邮箱会自动创建一个主页；访客看公开页不需要账号。</p>
+            <label class="field"><span>邮箱</span><input name="email" type="email" value="${demo ? 'demo@ability.local' : ''}" required /></label>
+            <label class="field"><span>密码</span><input name="password" type="password" value="${demo ? 'demo123' : ''}" required /></label>
             <button class="btn primary magnetic" type="submit">登录 / 创建账号</button>
             <div class="login-links"><a href="#/home">返回产品首页</a><a href="#/u/cj">查看公开示例</a></div>
           </form>
@@ -870,7 +951,7 @@
       </main>`;
   }
 
-  function publishDraft() {
+  async function publishDraft() {
     const db = loadDB();
     const row = currentProfile(db);
     const p = ensure(row);
@@ -879,7 +960,18 @@
     row.published = clone(p);
     row.publishedAt = new Date().toISOString();
     row.updatedAt = new Date().toISOString();
-    saveDB(db);
+    saveDB(db, { localOnly: runtime.useSupabase });
+    if (runtime.useSupabase && api()) {
+      clearTimeout(saveTimer);
+      try {
+        upsertProfile(await api().publishProfile(row), { current: true });
+        saveDB(loadDB(), { localOnly: true });
+      } catch (err) {
+        console.warn(err);
+        showToast('发布失败，请检查 Supabase 配置或 RLS');
+        return;
+      }
+    }
     refreshPreview();
     showToast('已发布到公开页');
   }
@@ -976,15 +1068,37 @@
   }
 
   function resetDemo() {
+    if (runtime.useSupabase) {
+      showToast('Supabase 模式下不会重置远程数据');
+      return;
+    }
     localStorage.removeItem(OS.STORAGE_KEY);
+    runtime.db = loadLocalDB();
     showToast('已重置示例数据');
     setTimeout(() => render(false), 200);
   }
 
-  function login(form) {
+  async function login(form) {
     const fd = new FormData(form);
     const email = String(fd.get('email') || '').trim();
     const password = String(fd.get('password') || '').trim();
+    if (runtime.useSupabase && api()) {
+      try {
+        await api().signInOrSignUp(email, password);
+        const user = await api().getUser();
+        if (!user) {
+          showToast('请先在邮箱中确认注册，再回来登录');
+          return;
+        }
+        await loadRemoteWorkspace({ render: false });
+        showToast('已登录');
+        navigate('dashboard');
+      } catch (err) {
+        console.warn(err);
+        showToast('登录失败：账号不存在、密码错误或邮箱未确认');
+      }
+      return;
+    }
     const db = loadDB();
     let user = db.users.find((u) => u.email === email);
     if (!user) {
@@ -1010,21 +1124,52 @@
     navigate('dashboard');
   }
 
-  function contact(form) {
-    const db = loadDB();
+  async function contact(form) {
     const fd = new FormData(form);
-    db.leads.push({
-      id: `lead_${Date.now()}`,
-      profileId: form.dataset.profileId,
+    const lead = {
       name: String(fd.get('name') || ''),
       email: String(fd.get('email') || ''),
       intent: String(fd.get('intent') || ''),
-      message: String(fd.get('message') || ''),
+      message: String(fd.get('message') || '')
+    };
+    if (runtime.useSupabase && api()) {
+      try {
+        await api().createLead(routePath().split('/')[1] || form.dataset.profileHandle || 'cj', lead);
+        form.reset();
+        showToast('消息已发送，已进入线索收件箱');
+      } catch (err) {
+        console.warn(err);
+        showToast('发送失败，请稍后重试');
+      }
+      return;
+    }
+    const db = loadDB();
+    db.leads.push({
+      id: `lead_${Date.now()}`,
+      profileId: form.dataset.profileId,
+      name: lead.name,
+      email: lead.email,
+      intent: lead.intent,
+      message: lead.message,
       createdAt: new Date().toISOString()
     });
     saveDB(db);
     form.reset();
     showToast('消息已发送，已进入线索收件箱');
+  }
+
+  async function logout() {
+    if (runtime.useSupabase && api()) {
+      try {
+        await api().signOut();
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+    runtime.db = loadLocalDB();
+    runtime.useSupabase = false;
+    showToast('已退出');
+    navigate('login');
   }
 
   function openResume() {
@@ -1160,6 +1305,7 @@
     if (action === 'open-command') openCommand();
     if (action === 'close-command') closeCommand();
     if (action === 'publish') publishDraft();
+    if (action === 'logout') logout();
     if (action === 'copy-public-url') copyPublicUrl();
     if (action === 'copy-resume-url') copyResumeUrl();
     if (action === 'select-template') selectTemplate(actionEl.dataset.templateId);
@@ -1239,9 +1385,10 @@
   window.addEventListener('hashchange', () => {
     closeResume();
     render(true);
+    hydrateFromSupabase();
   });
 
-  if (!location.hash) navigate('home');
+  if (!location.hash && routePath() === 'home') navigate('home');
   render(false);
-  hydrateFromAPI();
+  hydrateFromSupabase();
 }());

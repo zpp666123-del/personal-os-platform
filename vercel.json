@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/u/styles.css", "destination": "/styles.css" },
+    { "source": "/u/data.js", "destination": "/data.js" },
+    { "source": "/u/app.js", "destination": "/app.js" },
+    { "source": "/resume/styles.css", "destination": "/styles.css" },
+    { "source": "/resume/data.js", "destination": "/data.js" },
+    { "source": "/resume/app.js", "destination": "/app.js" },
+    { "source": "/u/:handle", "destination": "/index.html" },
+    { "source": "/resume/:handle", "destination": "/index.html" },
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/dashboard", "destination": "/index.html" },
+    { "source": "/templates", "destination": "/index.html" },
+    { "source": "/pricing", "destination": "/index.html" },
+    { "source": "/inbox", "destination": "/index.html" },
+    { "source": "/studio/:section", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}

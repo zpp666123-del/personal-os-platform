@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "serve": "python3 -m http.server 5173",
+    "deploy:vercel": "vercel --prod",
+    "deploy:cloudflare": "wrangler pages deploy . --project-name personal-os-platform"
+  },
+  "name": "personal-os-platform-v8-productized",
+  "version": "8.1.0-deploy-ready",
+  "private": true,
+  "description": "Deploy-ready static MVP for Personal Ability OS platform with Vercel, Netlify, Cloudflare and GitHub Pages configs."
+}

@@ -1,0 +1,3 @@
+name = "personal-os-platform"
+pages_build_output_dir = "."
+compatibility_date = "2026-06-30"

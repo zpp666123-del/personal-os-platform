@@ -122,6 +122,10 @@ CloudBase 静态托管里把索引文档和错误文档都设为 `index.html`，
 - 联系表单调用 `submitLead` 云函数写入 `leads`。
 - Inbox 只读取当前登录用户自己的 leads。
 
+## 产品结构
+
+核心定位、7 个固定模块、组件/库选择见 [docs/product-positioning.md](./docs/product-positioning.md)。
+
 ## 后续升级路线
 
 先按这个顺序做，别一上来做太大：

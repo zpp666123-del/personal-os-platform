@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>个人能力 OS · V8 Productized Platform</title>
     <meta name="description" content="面向 AI 时代的个人能力主页生成平台：产品首页、登录、Profile Studio、公开主页、网页版简历、字段可见性、模板、发布与线索闭环。" />
-    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      (function () {
+        const parts = location.pathname.split('/').filter(Boolean);
+        const base = location.hostname.endsWith('github.io') && parts[0] ? `/${parts[0]}/` : '/';
+        document.write(`<base href="${base}">`);
+      })();
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="ambient" aria-hidden="true">
@@ -20,10 +27,11 @@
     <div id="commandPalette" class="command-palette" aria-hidden="true"></div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <script src="/cloudbase-config.js"></script>
-    <script src="/cloudbase-client.js"></script>
-    <script src="/cloudbase-api.js"></script>
-    <script src="/data.js"></script>
-    <script src="/app.js"></script>
+    <script src="./cloudbase-config.js"></script>
+    <script src="./cloudbase-client.js"></script>
+    <script src="./cloudbase-api.js"></script>
+    <script src="./data.js"></script>
+    <script src="./js/product-sections.js"></script>
+    <script src="./app.js"></script>
   </body>
 </html>

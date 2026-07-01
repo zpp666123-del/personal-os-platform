@@ -11,6 +11,7 @@ const files = [
   'cloudbase-config.js',
   'cloudbase-client.js',
   'cloudbase-api.js',
+  'js/product-sections.js',
   '.nojekyll'
 ];
 
@@ -18,7 +19,9 @@ fs.rmSync(dist, { recursive: true, force: true });
 fs.mkdirSync(dist, { recursive: true });
 
 for (const file of files) {
-  fs.copyFileSync(path.join(root, file), path.join(dist, file));
+  const target = path.join(dist, file);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(path.join(root, file), target);
 }
 
 console.log(`CloudBase dist ready: ${path.relative(root, dist)}`);

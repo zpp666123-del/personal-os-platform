@@ -17,16 +17,14 @@
     hydrating: false
   };
 
-  const sections = [
-    ['identity', '身份资料', '定位、城市、期望与 PDF'],
-    ['visibility', '隐私可见性', '公开 / 详情 / 联系后可见'],
-    ['hero', '主页叙事', '标题、简介与能力记录'],
-    ['proof', '能力证据库', '岗位匹配与可信标签'],
-    ['projects', '项目案例库', '公开项目与作品链接'],
-    ['resume', '简历档案库', '教育、工作、项目经历'],
-    ['assets', '数字资产库', '链接、社媒、二维码'],
-    ['posts', '内容观点库', '文章、视频、复盘'],
-    ['contact', '发布与线索', '表单、发布和导出'],
+  const sections = window.PersonalOSSections || [
+    ['identity', '个人身份', '姓名、定位、头像与主页文案'],
+    ['assets', '社交/IP 聚合', '社媒、链接、二维码入口'],
+    ['projects', '精选项目', '项目案例与能力证据'],
+    ['posts', '作品资产', '文章、视频、复盘与作品链接'],
+    ['resume', '工作/履历', '教育、工作、项目经历'],
+    ['contact', '合作方式', '联系表单、发布与导出'],
+    ['visibility', '隐私可见性', '公开、详情、联系后可见']
   ];
 
   const visibilityOptions = [
@@ -475,10 +473,11 @@
     const leadsCount = db.leads.filter((l) => l.profileId === row.id).length;
     const health = Math.min(100, 44 + p.projects.length * 6 + p.assets.length * 3 + (p.resume.summary ? 8 : 0) + (p.contact.note ? 6 : 0));
     const tasks = [
-      ['完善身份定位', !!p.identity.title, '#/studio/identity'],
-      ['补充 3 个项目案例', p.projects.length >= 3, '#/studio/projects'],
+      ['完善个人身份', !!p.identity.title, '#/studio/identity'],
+      ['补充 3 个精选项目', p.projects.length >= 3, '#/studio/projects'],
+      ['整理社交/IP 入口', p.assets.length >= 2, '#/studio/assets'],
+      ['填写工作/履历', !!p.resume.summary && p.resume.education.length, '#/studio/resume'],
       ['设置隐私可见性', !!p.visibility, '#/studio/visibility'],
-      ['填写简历档案', !!p.resume.summary && p.resume.education.length, '#/studio/resume'],
       ['发布公开页', !!row.publishedAt, '#/studio/contact'],
     ];
     return shell(`
@@ -518,7 +517,7 @@
         <section class="section tight" data-reveal>
           <div class="section-head"><div><p class="section-kicker">Quick Operations</p><h2>继续完善核心模块。</h2></div></div>
           <div class="quick-grid">
-            ${sections.slice(0,9).map((s) => `<a class="quick-card tilt-card motion-card" href="#/studio/${s[0]}"><b>${s[1]}</b><span>${s[2]}</span></a>`).join('')}
+            ${sections.map((s) => `<a class="quick-card tilt-card motion-card" href="#/studio/${s[0]}"><b>${s[1]}</b><span>${s[2]}</span></a>`).join('')}
           </div>
         </section>
       </main>
@@ -553,7 +552,7 @@
   }
 
   function editorContent(active, p, row) {
-    if (active === 'identity') return editorCard('基本资料', `
+    if (active === 'identity') return editorCard('个人身份', `
       <div class="form-grid">
         ${inputField('姓名 / 昵称', 'identity.name', p.identity.name)}
         ${inputField('主页 handle', 'identity.handle', p.identity.handle)}
@@ -573,6 +572,13 @@
         ${inputField('可开始时间', 'identity.availability', p.identity.availability)}
         ${inputField('期望薪资', 'identity.expectedSalary', p.identity.expectedSalary)}
         ${inputField('PDF 简历链接', 'identity.resumePdfUrl', p.identity.resumePdfUrl)}
+      </div>
+      <h3>主页文案</h3>
+      <div class="form-grid">
+        ${inputField('顶部小标签', 'hero.badge', p.hero.badge)}
+        ${inputField('主按钮文案', 'hero.primaryCta', p.hero.primaryCta)}
+        ${inputField('主标题', 'hero.headline', p.hero.headline, { wide: true })}
+        ${inputField('介绍文案', 'hero.intro', p.hero.intro, { textarea: true, wide: true })}
       </div>`);
 
     if (active === 'visibility') return editorCard('字段可见性', `
@@ -600,9 +606,15 @@
       ['title', '标题'], ['desc', '说明', 'textarea'], ['tags', '标签，逗号分隔', 'tags']
     ]));
 
-    if (active === 'projects') return editorCard('项目案例', listEditor('projects', p.projects, [
-      ['title', '项目标题'], ['summary', '项目摘要', 'textarea'], ['tags', '标签，逗号分隔', 'tags'], ['url', '项目链接']
-    ]));
+    if (active === 'projects') return editorCard('精选项目', `
+      <h3>项目案例</h3>
+      ${listEditor('projects', p.projects, [
+        ['title', '项目标题'], ['summary', '项目摘要', 'textarea'], ['tags', '标签，逗号分隔', 'tags'], ['url', '项目链接']
+      ])}
+      <h3>能力证据</h3>
+      ${listEditor('proof', p.proof, [
+        ['title', '标题'], ['desc', '说明', 'textarea'], ['tags', '标签，逗号分隔', 'tags']
+      ])}`);
 
     if (active === 'resume') return editorCard('完整简历档案', `
       <div class="form-grid one">
@@ -622,11 +634,11 @@
       <h3>项目经历详情</h3>${listEditor('resume.projectExperiences', p.resume.projectExperiences, [['period','时间'],['title','项目'],['role','角色'],['desc','描述','textarea'],['result','结果','textarea'],['stack','技术栈，逗号分隔','tags']])}
       <h3>证书 / 奖项</h3>${listEditor('resume.certificates', p.resume.certificates, [['name','名称'],['issuer','颁发方'],['date','日期'],['url','链接']])}`);
 
-    if (active === 'assets') return editorCard('数字资产', listEditor('assets', p.assets, [
+    if (active === 'assets') return editorCard('社交/IP 聚合', listEditor('assets', p.assets, [
       ['type', '类型 github/blog/social/email/qr'], ['label', '名称'], ['value', '显示值'], ['url', '链接']
     ]));
 
-    if (active === 'posts') return editorCard('内容观点', listEditor('posts', p.posts, [
+    if (active === 'posts') return editorCard('作品资产', listEditor('posts', p.posts, [
       ['title', '标题'], ['meta', '类型 / 日期'], ['views', '浏览量'], ['url', '链接']
     ]));
 
@@ -1272,9 +1284,7 @@
     const commands = [
       ['平台首页', '#/home', '产品介绍'],
       ['工作台', '#/dashboard', '主页状态'],
-      ['编辑器', '#/studio/identity', '编辑资料'],
-      ['字段可见性', '#/studio/visibility', '隐私控制'],
-      ['简历档案', '#/studio/resume', '学历、工作、项目'],
+      ...sections.map(([id, label, desc]) => [label, `#/studio/${id}`, desc]),
       ['模板库', '#/templates', '切换风格'],
       ['定价草案', '#/pricing', '商业化路径'],
       ['公开主页', `#/u/${row.handle}`, '查看效果'],

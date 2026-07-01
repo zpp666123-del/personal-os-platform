@@ -385,7 +385,9 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .public-orbit { position: relative; min-height: 560px; border-radius: 54px; padding: 30px; background: linear-gradient(145deg, rgba(255,255,255,.84), rgba(248,241,222,.84) 58%, rgba(231,235,255,.78)); border: 1px solid rgba(255,255,255,.84); box-shadow: var(--shadow-lg); overflow: hidden; }
 .public-orbit::before { content: ""; position: absolute; width: 540px; height: 540px; border-radius: 50%; left: 50%; top: 50%; transform: translate(-50%,-50%); border: 1px solid rgba(49,94,255,.16); box-shadow: inset 0 0 0 70px rgba(49,94,255,.025), inset 0 0 0 150px rgba(139,92,246,.025); animation: pulseRing 7s ease-in-out infinite; }
 .profile-card { position: relative; z-index: 1; border-radius: 36px; padding: 26px; background: rgba(255,255,255,.78); border: 1px solid rgba(255,255,255,.86); box-shadow: var(--shadow-md); backdrop-filter: blur(16px); }
-.avatar { width: 76px; height: 76px; border-radius: 26px; background: linear-gradient(135deg, #111, var(--blue), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 950; font-size: 22px; box-shadow: 0 18px 36px rgba(49,94,255,.22); }
+.avatar { width: 76px; height: 76px; border-radius: 26px; background: linear-gradient(135deg, #111, var(--blue), var(--violet)); color: #fff; display: grid; place-items: center; font-weight: 950; font-size: 22px; box-shadow: 0 18px 36px rgba(49,94,255,.22); overflow: hidden; }
+.avatar.has-image { background: #fff; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .profile-card h2 { margin: 18px 0 8px; font-size: 36px; line-height: .98; letter-spacing: -.07em; }
 .profile-card p { color: var(--muted); line-height: 1.7; }
 .profile-stats { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 20px; }
@@ -412,7 +414,10 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .proof-card p { color: var(--muted); line-height: 1.7; margin: 0 0 12px; }
 .project-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
 .project-card { padding: 18px; }
-.project-cover { height: 170px; border-radius: 24px; background: radial-gradient(circle at 20% 20%, rgba(49,94,255,.25), transparent 34%), radial-gradient(circle at 80% 30%, rgba(139,92,246,.20), transparent 34%), #111; display: flex; align-items: end; padding: 18px; color: #fff; font-weight: 950; letter-spacing: -.04em; }
+.project-cover { height: 170px; border-radius: 24px; background: radial-gradient(circle at 20% 20%, rgba(49,94,255,.25), transparent 34%), radial-gradient(circle at 80% 30%, rgba(139,92,246,.20), transparent 34%), #111; display: flex; align-items: end; padding: 18px; color: #fff; font-weight: 950; letter-spacing: -.04em; position: relative; overflow: hidden; }
+.project-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.project-cover.has-image::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,.72)); }
+.project-cover span { position: relative; z-index: 1; }
 .project-card h3 { font-size: 24px; letter-spacing: -.05em; margin: 18px 0 8px; }
 .project-card p { color: var(--muted); line-height: 1.7; }
 
@@ -436,7 +441,8 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .asset-card span { color: var(--muted); font-size: 13px; line-height: 1.5; word-break: break-word; }
 .post-list { display: grid; gap: 12px; }
 .post-card { padding: 18px; display: grid; grid-template-columns: 84px minmax(0,1fr) auto; gap: 16px; align-items: center; }
-.post-thumb { width: 84px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(49,94,255,.18), rgba(139,92,246,.20)), #fff; border: 1px solid var(--line); }
+.post-thumb { width: 84px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(49,94,255,.18), rgba(139,92,246,.20)), #fff; border: 1px solid var(--line); overflow: hidden; }
+.post-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .post-card h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -.04em; }
 .post-card p { margin: 0; color: var(--muted); }
 .contact-grid { display: grid; grid-template-columns: .85fr 1.15fr; gap: 18px; }

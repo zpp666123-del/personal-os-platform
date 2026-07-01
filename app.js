@@ -41,9 +41,9 @@
 
   const emptyItem = {
     proof: { title: '新的能力证据', desc: '写下这项能力如何被证明。', tags: ['证据'] },
-    projects: { title: '新的项目案例', summary: '一句话说明项目解决的问题、你的角色和结果。', tags: ['MVP'], url: '#' },
+    projects: { title: '新的项目案例', summary: '一句话说明项目解决的问题、你的角色和结果。', tags: ['MVP'], url: '#', coverUrl: '' },
     assets: { type: 'website', label: '新的数字资产', value: '链接或账号', url: '#' },
-    posts: { title: '新的内容标题', meta: '类型 · 日期', views: '0', url: '#' },
+    posts: { title: '新的内容标题', meta: '类型 · 日期', views: '0', url: '#', coverUrl: '' },
     'resume.education': { period: '2020 — 2024', school: '学校名称', degree: '本科', major: '专业', city: '城市', desc: '简要描述学习方向、项目或成果。' },
     'resume.work': { period: '2026 — 至今', company: '公司 / 项目', role: '职位 / 角色', location: '城市 / 远程', desc: '写下职责与关键工作。', result: '写下可验证结果。' },
     'resume.projectExperiences': { period: '2026', title: '项目名称', role: '你的角色', desc: '项目背景、问题和你的行动。', result: '结果和证据。', stack: ['Tech'] },
@@ -62,6 +62,21 @@
   const asTags = (value) => Array.isArray(value) ? value.map(String).filter(Boolean) : String(value || '').split(/[，,\n]/).map((x) => x.trim()).filter(Boolean);
   const tag = (value) => `<span class="tag">${esc(value)}</span>`;
   const assetIcon = (type) => assetIcons[type] || assetIcons.default;
+  function mediaUrl(value, kind = 'image') {
+    const url = String(value || '').trim();
+    if (!url || url === '#') return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    if (kind === 'image' && /^data:image\//i.test(url)) return url;
+    return '';
+  }
+
+  function avatarNode(p, cls = '') {
+    const label = p.identity.avatar || p.identity.name.slice(0, 2);
+    const src = mediaUrl(p.identity.avatarUrl);
+    return src
+      ? `<div class="avatar has-image ${cls}"><img src="${esc(src)}" alt="${esc(p.identity.name || '头像')}" loading="lazy" /></div>`
+      : `<div class="avatar ${cls}">${esc(label)}</div>`;
+  }
 
   function loadLocalDB() {
     try {
@@ -340,7 +355,7 @@
     return `
       <header class="reader-nav">
         <a class="reader-brand" href="#/u/${esc(row.handle)}" aria-label="公开主页顶部">
-          <span class="avatar mini">${esc(p.identity.avatar || p.identity.name.slice(0, 2))}</span>
+          ${avatarNode(p, 'mini')}
           <span><b>${esc(canShow(p, 'name') ? p.identity.name : '公开主页')}</b><small>${esc(p.identity.title || '个人能力主页')}</small></span>
         </a>
         <nav class="reader-links" aria-label="公开主页导航">
@@ -558,6 +573,7 @@
         ${inputField('主页 handle', 'identity.handle', p.identity.handle)}
         ${inputField('身份定位', 'identity.title', p.identity.title)}
         ${inputField('头像文字', 'identity.avatar', p.identity.avatar)}
+        ${inputField('头像图片 URL', 'identity.avatarUrl', p.identity.avatarUrl, { type: 'url' })}
         ${inputField('所在城市', 'identity.city', p.identity.city)}
         ${inputField('开放状态', 'identity.status', p.identity.status)}
         ${inputField('个人域名', 'identity.website', p.identity.website)}
@@ -571,7 +587,7 @@
         ${inputField('期望角色', 'identity.expectedRole', p.identity.expectedRole)}
         ${inputField('可开始时间', 'identity.availability', p.identity.availability)}
         ${inputField('期望薪资', 'identity.expectedSalary', p.identity.expectedSalary)}
-        ${inputField('PDF 简历链接', 'identity.resumePdfUrl', p.identity.resumePdfUrl)}
+        ${inputField('PDF 简历链接', 'identity.resumePdfUrl', p.identity.resumePdfUrl, { type: 'url' })}
       </div>
       <h3>主页文案</h3>
       <div class="form-grid">
@@ -609,7 +625,7 @@
     if (active === 'projects') return editorCard('精选项目', `
       <h3>项目案例</h3>
       ${listEditor('projects', p.projects, [
-        ['title', '项目标题'], ['summary', '项目摘要', 'textarea'], ['tags', '标签，逗号分隔', 'tags'], ['url', '项目链接']
+        ['title', '项目标题'], ['summary', '项目摘要', 'textarea'], ['tags', '标签，逗号分隔', 'tags'], ['url', '项目链接', 'url'], ['coverUrl', '封面图片 URL', 'url']
       ])}
       <h3>能力证据</h3>
       ${listEditor('proof', p.proof, [
@@ -639,7 +655,7 @@
     ]));
 
     if (active === 'posts') return editorCard('作品资产', listEditor('posts', p.posts, [
-      ['title', '标题'], ['meta', '类型 / 日期'], ['views', '浏览量'], ['url', '链接']
+      ['title', '标题'], ['meta', '类型 / 日期'], ['views', '浏览量'], ['url', '链接', 'url'], ['coverUrl', '封面图片 URL', 'url']
     ]));
 
     return editorCard('联系、发布与导出', `
@@ -690,13 +706,14 @@
     const kindAttr = kind ? ` data-kind="${esc(kind)}"` : '';
     const base = `data-list-field data-list="${esc(path)}" data-index="${index}" data-field="${esc(key)}"${kindAttr}`;
     if (kind === 'textarea') return `<label class="field full"><span>${esc(label)}</span><textarea ${base}>${esc(val)}</textarea></label>`;
-    return `<label class="field"><span>${esc(label)}</span><input ${kind === 'number' ? 'type="number"' : 'type="text"'} ${base} value="${esc(val)}" /></label>`;
+    const type = kind === 'number' ? 'number' : kind === 'url' ? 'url' : 'text';
+    return `<label class="field"><span>${esc(label)}</span><input type="${type}" ${base} value="${esc(val)}" /></label>`;
   }
 
   function studioPreview(p, row) {
     return `<div class="live-screen">
       <div class="browser-mini"><i></i><i></i><i></i><span>/u/${esc(row.handle)}</span></div>
-      <div class="avatar">${esc(p.identity.avatar || p.identity.name.slice(0,2))}</div>
+      ${avatarNode(p)}
       <h3>${esc(p.hero.headline)}</h3>
       <p class="muted">${esc(p.identity.title)}</p>
       <div class="live-line"><span style="width:${Math.min(100, Math.round((p.progress.current / p.progress.total) * 100))}%"></span></div>
@@ -791,7 +808,7 @@
           </div>
           <aside class="public-orbit tilt-card motion-card">
             <article class="profile-card">
-              <div class="avatar">${esc(p.identity.avatar || p.identity.name.slice(0,2))}</div>
+              ${avatarNode(p)}
               <h2>${canShow(p,'name') ? esc(p.identity.name) : '个人主页'}</h2>
               <p>${canShow(p,'title') ? esc(p.identity.title) : '身份信息未公开'}</p>
               <div class="profile-stats">${p.metrics.map((m) => `<div class="profile-stat"><b>${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join('')}</div>
@@ -834,7 +851,7 @@
             <div class="resume-title-card tilt-card motion-card">
               <div><p class="section-kicker">Resume</p><h2>简历<br>摘要</h2></div>
               <p>首页只展示摘要和关键判断信息，完整学历、专业、工作与项目经历放入简历抽屉，避免页面被传统表格破坏。</p>
-              <div class="resume-actions"><button class="btn primary magnetic" type="button" data-action="open-resume">查看完整简历</button><a class="btn ghost magnetic" href="#/resume/${esc(row.handle)}">网页版简历</a></div>
+              <div class="resume-actions"><button class="btn primary magnetic" type="button" data-action="open-resume">查看完整简历</button><a class="btn ghost magnetic" href="#/resume/${esc(row.handle)}">网页版简历</a>${mediaUrl(p.identity.resumePdfUrl, 'file') && canShow(p,'resumePdf','public') ? `<a class="btn ghost magnetic" href="${esc(mediaUrl(p.identity.resumePdfUrl, 'file'))}" target="_blank" rel="noopener">下载 PDF</a>` : ''}</div>
             </div>
             <div>
               <div class="resume-detail-grid">
@@ -846,7 +863,7 @@
               <div class="resume-strip">
                 <article class="resume-block"><h3>技能栈</h3><p>${esc(p.resume.stack.join(' · '))}</p></article>
                 <article class="resume-block"><h3>隐私控制</h3><p>${esc(p.contact.privacyNote)}</p></article>
-                <article class="resume-block"><h3>PDF</h3><p>${canShow(p,'resumePdf','public') ? '支持下载或替换为真实 PDF 链接。' : 'PDF 可设置为联系后可见。'}</p></article>
+                <article class="resume-block"><h3>PDF</h3><p>${canShow(p,'resumePdf','public') ? (mediaUrl(p.identity.resumePdfUrl, 'file') ? '已配置 PDF 简历链接。' : '支持替换为真实 PDF 链接。') : 'PDF 可设置为联系后可见。'}</p></article>
               </div>
             </div>
           </div>
@@ -859,7 +876,7 @@
 
         <section class="public-section" data-reveal>
           <div class="section-head"><div><p class="section-kicker">Blog & Insights</p><h2>内容与观点。</h2></div></div>
-          <div class="post-list">${p.posts.map((x) => `<a class="post-card tilt-card motion-card" href="${esc(x.url || '#')}"><span class="post-thumb"></span><div><h3>${esc(x.title)}</h3><p>${esc(x.meta)}</p></div><span class="pill">${esc(x.views)}</span></a>`).join('')}</div>
+          <div class="post-list">${p.posts.map(postCard).join('')}</div>
         </section>
 
         <section id="contact" class="public-section contact-grid" data-reveal>
@@ -886,7 +903,13 @@
   }
 
   function projectCard(x, i) {
-    return `<article class="project-card tilt-card motion-card"><div class="project-cover">0${i+1} · ${esc(x.title)}</div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div>${(x.tags||[]).map(tag).join('')}</div><a class="btn tiny ghost magnetic" href="${esc(x.url || '#')}">查看详情</a></article>`;
+    const cover = mediaUrl(x.coverUrl);
+    return `<article class="project-card tilt-card motion-card"><div class="project-cover ${cover ? 'has-image' : ''}">${cover ? `<img src="${esc(cover)}" alt="${esc(x.title)}" loading="lazy" />` : ''}<span>0${i+1} · ${esc(x.title)}</span></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div>${(x.tags||[]).map(tag).join('')}</div><a class="btn tiny ghost magnetic" href="${esc(x.url || '#')}">查看详情</a></article>`;
+  }
+
+  function postCard(x) {
+    const cover = mediaUrl(x.coverUrl);
+    return `<a class="post-card tilt-card motion-card" href="${esc(x.url || '#')}"><span class="post-thumb ${cover ? 'has-image' : ''}">${cover ? `<img src="${esc(cover)}" alt="" loading="lazy" />` : ''}</span><div><h3>${esc(x.title)}</h3><p>${esc(x.meta)}</p></div><span class="pill">${esc(x.views)}</span></a>`;
   }
 
   function resumeDrawer(p, row) {

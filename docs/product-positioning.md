@@ -61,7 +61,7 @@
 
 按这个顺序做：
 
-1. 头像、项目封面、PDF 简历上传。
+1. 头像、项目封面、PDF 简历上传。当前已先落地 `avatarUrl`、`coverUrl`、`resumePdfUrl` 这些媒体 URL 槽位；CloudBase Storage 上传等真实使用时再接。
 2. 项目/作品模块增强。
 3. Inbox 状态、备注、导出和通知。
 4. 模板和主题。

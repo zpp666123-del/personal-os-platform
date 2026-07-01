@@ -8,6 +8,7 @@
       handle: 'cj',
       title: 'AI 产品创业者 · Agent Builder · 内容创作者',
       avatar: 'CJ',
+      avatarUrl: '',
       city: 'London / Remote',
       location: 'London / Remote',
       status: '开放求职、副业、项目共创',
@@ -87,9 +88,9 @@
       body: '不是只放一份简历，也不是堆一堆社交链接。我希望把一个人的项目、经历、内容、资产和正在构建的过程放到同一个入口里。'
     },
     projects: [
-      { title: 'AI 知识库问答助手', summary: '面向企业文档的问答系统，支持多源检索、引用和权限控制。', tags: ['AI Agent', 'RAG', 'Next.js'], url: '#' },
-      { title: '数据中台可视化平台', summary: '从数据接入到指标看板的分析平台，支持自定义维度和多角色协作。', tags: ['Dashboard', 'React', 'Node.js'], url: '#' },
-      { title: '个人知识管理系统', summary: '沉淀项目、内容、灵感和复盘，支持标签、双链和智能搜索。', tags: ['Knowledge', 'MongoDB', 'Search'], url: '#' }
+      { title: 'AI 知识库问答助手', summary: '面向企业文档的问答系统，支持多源检索、引用和权限控制。', tags: ['AI Agent', 'RAG', 'Next.js'], url: '#', coverUrl: '' },
+      { title: '数据中台可视化平台', summary: '从数据接入到指标看板的分析平台，支持自定义维度和多角色协作。', tags: ['Dashboard', 'React', 'Node.js'], url: '#', coverUrl: '' },
+      { title: '个人知识管理系统', summary: '沉淀项目、内容、灵感和复盘，支持标签、双链和智能搜索。', tags: ['Knowledge', 'MongoDB', 'Search'], url: '#', coverUrl: '' }
     ],
     assets: [
       { type: 'github', label: 'GitHub', value: '@yourname', url: '#' },
@@ -127,9 +128,9 @@
       languages: ['中文：母语', '英文：工作沟通']
     },
     posts: [
-      { title: '如何用 AI Agent 提升个人生产力系统', meta: '方法论 · 2026-06-20', views: '1.2k', url: '#' },
-      { title: '从 0 到 1 搭建知识库问答系统的完整指南', meta: '技术实践 · 2026-06-12', views: '2.3k', url: '#' },
-      { title: 'B 端数据可视化设计的 5 个关键原则', meta: '设计方法 · 2026-05-28', views: '856', url: '#' }
+      { title: '如何用 AI Agent 提升个人生产力系统', meta: '方法论 · 2026-06-20', views: '1.2k', url: '#', coverUrl: '' },
+      { title: '从 0 到 1 搭建知识库问答系统的完整指南', meta: '技术实践 · 2026-06-12', views: '2.3k', url: '#', coverUrl: '' },
+      { title: 'B 端数据可视化设计的 5 个关键原则', meta: '设计方法 · 2026-05-28', views: '856', url: '#', coverUrl: '' }
     ],
     contact: {
       note: '求职、项目合作、内容共创、媒体采访都可以从这里开始。提交联系后，我可以按需要发送完整版 PDF 或进一步联系方式。',

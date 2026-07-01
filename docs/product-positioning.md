@@ -63,7 +63,7 @@
 
 1. 头像、项目封面、PDF 简历上传。当前已先落地 `avatarUrl`、`coverUrl`、`resumePdfUrl` 这些媒体 URL 槽位；CloudBase Storage 上传等真实使用时再接。
 2. 项目/作品模块增强。
-3. Inbox 状态、备注、导出和通知。
+3. Inbox 状态、备注和通知。CSV 导出已先落地。
 4. 模板和主题。
 5. 访问统计。
 6. 自定义域名和商业化。

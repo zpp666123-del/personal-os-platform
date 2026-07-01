@@ -962,13 +962,17 @@
       </main>`, { noHeader: true, noFooter: true });
   }
 
+  function currentLeads(db = loadDB()) {
+    const row = currentProfile(db);
+    return db.leads.filter((l) => l.profileId === row.id).slice().reverse();
+  }
+
   function inboxPage() {
     const db = loadDB();
-    const row = currentProfile(db);
-    const leads = db.leads.filter((l) => l.profileId === row.id).slice().reverse();
+    const leads = currentLeads(db);
     return shell(`
       <main class="page">
-        <section class="simple-hero" data-reveal><p class="eyebrow">Inbox</p><h1>联系线索收件箱。</h1><p>访客提交的面试、合作、请求联系方式都会进入这里。</p></section>
+        <section class="simple-hero" data-reveal><p class="eyebrow">Inbox</p><h1>联系线索收件箱。</h1><p>访客提交的面试、合作、请求联系方式都会进入这里。</p><div class="actions"><button class="btn ghost magnetic" type="button" data-action="export-leads" ${leads.length ? '' : 'disabled'}>导出 CSV</button></div></section>
         <section class="lead-list" data-reveal>
           ${leads.length ? leads.map((l) => `<article class="lead-card tilt-card motion-card"><div><span>${esc(l.intent)}</span><h3>${esc(l.name)}</h3><p>${esc(l.email)}<br>${new Date(l.createdAt).toLocaleString()}</p></div><p>${esc(l.message)}</p></article>`).join('') : '<article class="lead-card"><h3>暂无线索</h3><p>公开页联系表单提交后会出现在这里。</p></article>'}
         </section>
@@ -1175,6 +1179,33 @@
     a.click();
     URL.revokeObjectURL(a.href);
     showToast('已导出 JSON');
+  }
+
+  function csvCell(value) {
+    const text = String(value ?? '').replace(/\r?\n/g, ' ').trim();
+    const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+    return `"${safe.replaceAll('"', '""')}"`;
+  }
+
+  function exportLeadsCSV() {
+    const leads = currentLeads();
+    if (!leads.length) {
+      showToast('暂无线索可导出');
+      return;
+    }
+    const row = currentProfile(loadDB());
+    const header = ['name', 'email', 'intent', 'message', 'status', 'createdAt'];
+    const lines = [
+      header.map(csvCell).join(','),
+      ...leads.map((lead) => header.map((key) => csvCell(key === 'createdAt' ? new Date(lead.createdAt).toISOString() : lead[key])).join(','))
+    ];
+    const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${row.handle}-leads.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('已导出 CSV');
   }
 
   function resetDemo() {
@@ -1450,6 +1481,7 @@
     if (action === 'remove-list') removeList(actionEl.dataset.list, actionEl.dataset.index);
     if (action === 'move-list') moveList(actionEl.dataset.list, actionEl.dataset.index, actionEl.dataset.dir);
     if (action === 'export-json') exportJSON();
+    if (action === 'export-leads') exportLeadsCSV();
     if (action === 'reset-demo') resetDemo();
     if (action === 'open-resume') openResume();
     if (action === 'close-resume') closeResume();

@@ -11,10 +11,9 @@
   let saveSeq = 0;
   let saveAbort = null;
   let publishing = false;
-  const CANONICAL_ORIGIN = 'https://personal-osplatformv8deployready.vercel.app';
   const runtime = {
     db: null,
-    useSupabase: false,
+    useCloudBase: false,
     hydrating: false
   };
 
@@ -85,7 +84,7 @@
 
   function saveDB(db, options = {}) {
     runtime.db = db;
-    if (runtime.useSupabase) {
+    if (runtime.useCloudBase) {
       if (!options.localOnly) scheduleDraftSave();
       return;
     }
@@ -112,7 +111,7 @@
   }
 
   function api() {
-    return window.AbilitySupabaseAPI;
+    return window.AbilityCloudBaseAPI;
   }
 
   function needsAuth(path = routePath()) {
@@ -182,10 +181,10 @@
     return row;
   }
 
-  async function hydrateFromSupabase() {
+  async function hydrateFromCloudBase() {
     const service = api();
     if (!service || runtime.hydrating || !(await service.isEnabled())) return;
-    runtime.useSupabase = true;
+    runtime.useCloudBase = true;
     runtime.hydrating = true;
     try {
       const path = routePath();
@@ -198,9 +197,8 @@
       render(false);
     } catch (err) {
       console.warn(err);
-      runtime.useSupabase = false;
-      const onProduction = location.hostname === new URL(CANONICAL_ORIGIN).hostname;
-      showToast(onProduction ? 'Supabase 配置异常，请稍后重试' : 'Supabase 暂不可用，已显示本地 Demo');
+      runtime.useCloudBase = false;
+      showToast(location.protocol === 'file:' ? 'CloudBase 暂不可用，已显示本地 Demo' : 'CloudBase 配置异常，已显示本地 Demo');
     } finally {
       runtime.hydrating = false;
     }
@@ -284,7 +282,8 @@
   }
 
   function prettyBaseUrl() {
-    return CANONICAL_ORIGIN;
+    if (location.origin && location.origin !== 'null') return location.origin;
+    return 'https://your-domain.example';
   }
 
   function publicUrl(row) {
@@ -313,7 +312,7 @@
         <div class="nav-actions">
           <button class="icon-btn magnetic" type="button" data-action="open-command" aria-label="打开命令台">⌘</button>
           <a class="top-cta magnetic" href="#/u/${esc(row.handle)}">公开页</a>
-          ${runtime.useSupabase ? '<button class="top-cta light magnetic" type="button" data-action="logout">退出</button>' : ''}
+          ${runtime.useCloudBase ? '<button class="top-cta light magnetic" type="button" data-action="logout">退出</button>' : ''}
         </div>
       </header>`;
   }
@@ -371,7 +370,7 @@
     const footerText = options.mode === 'reader'
       ? '公开链接可直接分享给面试官、合作方或朋友阅读。'
       : '成熟产品方向：主页生成、资料治理、发布、线索与模板。';
-    const footer = options.noFooter ? '' : `<footer class="footer mature-footer"><b>个人能力 OS</b><span>${footerText}</span><span>V8 Productized · ${runtime.useSupabase ? 'Supabase' : 'Demo'} MVP</span></footer>`;
+    const footer = options.noFooter ? '' : `<footer class="footer mature-footer"><b>个人能力 OS</b><span>${footerText}</span><span>V8 Productized · ${runtime.useCloudBase ? 'CloudBase' : 'Demo'} MVP</span></footer>`;
     return `${header}${content}${footer}`;
   }
 
@@ -432,7 +431,7 @@
             <div>
               <p class="section-kicker">Operating Model</p>
               <h2>一开始就按成熟 SaaS 的方式留接口。</h2>
-              <p>当前仍是轻量前端 MVP，但代码结构已经模拟了未来真实产品需要的核心分层：本地数据层、用户资料、模板、发布版本、线索与 Supabase 数据库草案。</p>
+              <p>当前仍是轻量前端 MVP，但代码结构已经接入国内可访问的 CloudBase 数据层：用户资料、模板、发布版本、线索与静态托管可以逐步扩展。</p>
             </div>
             <div class="ops-list">
               <div><b>草稿版</b><span>用户编辑中，不影响公开页</span></div>
@@ -959,7 +958,7 @@
           <p>我们只收集运行个人主页所需的信息：账号邮箱、Profile 草稿、发布后的公开资料，以及访客主动提交的联系线索。</p>
         </section>
         <section class="feature-grid" data-reveal>
-          <article class="feature-card"><span>01</span><h3>草稿</h3><p>草稿资料只供登录用户自己编辑查看，依赖 Supabase RLS 做访问控制。</p></article>
+          <article class="feature-card"><span>01</span><h3>草稿</h3><p>草稿资料只供登录用户自己编辑查看，依赖 CloudBase 登录与数据库权限控制。</p></article>
           <article class="feature-card"><span>02</span><h3>公开页</h3><p>点击发布后，公开主页和网页版简历会对访问链接的人可见。字段可见性由你在 Studio 中控制。</p></article>
           <article class="feature-card"><span>03</span><h3>线索</h3><p>访客提交的姓名、邮箱和留言只展示给主页拥有者，用于求职、合作或进一步沟通。</p></article>
         </section>
@@ -967,7 +966,7 @@
   }
 
   function loginPage(mode = routePath()) {
-    const demo = !runtime.useSupabase;
+    const demo = !runtime.useCloudBase;
     const isSignup = mode === 'signup';
     return `
       <main class="auth-page">
@@ -982,7 +981,7 @@
           <form class="login-card tilt-card motion-card" data-login-form data-auth-mode="${isSignup ? 'signup' : 'login'}">
             <p class="eyebrow">${isSignup ? 'Sign up' : 'Login'}</p>
             <h2>${isSignup ? '创建账号' : '进入 Profile Studio'}</h2>
-            <p class="muted">${demo ? '本地 Demo 模式。' : (isSignup ? 'Supabase Auth 注册。' : 'Supabase Auth 登录。')}访客看公开页不需要账号。</p>
+            <p class="muted">${demo ? '本地 Demo 模式。' : (isSignup ? 'CloudBase Auth 注册。' : 'CloudBase Auth 登录。')}访客看公开页不需要账号。</p>
             <label class="field"><span>邮箱</span><input name="email" type="email" autocomplete="email" value="${demo ? 'demo@ability.local' : ''}" required /></label>
             <label class="field"><span>密码</span><input name="password" type="password" autocomplete="${isSignup ? 'new-password' : 'current-password'}" ${demo && !isSignup ? '' : 'minlength="8"'} value="${demo && !isSignup ? 'demo123' : ''}" required /></label>
             ${isSignup ? '<label class="field"><span>确认密码</span><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required /></label><label class="check-line"><input name="agree" type="checkbox" required /><span>我同意 <a href="#/terms">用户协议</a> 和 <a href="#/privacy">隐私说明</a></span></label>' : ''}
@@ -1006,8 +1005,8 @@
       row.published = clone(p);
       row.publishedAt = new Date().toISOString();
       row.updatedAt = new Date().toISOString();
-      saveDB(db, { localOnly: runtime.useSupabase });
-      if (runtime.useSupabase && api()) {
+      saveDB(db, { localOnly: runtime.useCloudBase });
+      if (runtime.useCloudBase && api()) {
         clearTimeout(saveTimer);
         if (saveAbort) saveAbort.abort();
         saveSeq += 1;
@@ -1017,7 +1016,7 @@
         } catch (err) {
           console.warn(err);
           const message = String(err.message || '').toLowerCase();
-          showToast(message.includes('duplicate') || message.includes('unique') ? '发布失败：handle 已被占用' : '发布失败，请检查 Supabase 配置或 RLS');
+          showToast(message.includes('duplicate') || message.includes('unique') ? '发布失败：handle 已被占用' : '发布失败，请检查 CloudBase 配置或权限');
           return;
         }
       }
@@ -1121,8 +1120,8 @@
   }
 
   function resetDemo() {
-    if (runtime.useSupabase) {
-      showToast('Supabase 模式下不会重置远程数据');
+    if (runtime.useCloudBase) {
+      showToast('CloudBase 模式下不会重置远程数据');
       return;
     }
     localStorage.removeItem(OS.STORAGE_KEY);
@@ -1145,7 +1144,7 @@
       showToast('两次输入的密码不一致');
       return;
     }
-    if (runtime.useSupabase && api()) {
+    if (runtime.useCloudBase && api()) {
       try {
         if (mode === 'signup') await api().signUp(email, password);
         else await api().signIn(email, password);
@@ -1211,7 +1210,7 @@
       intent: String(fd.get('intent') || '').trim(),
       message: String(fd.get('message') || '').trim()
     };
-    if (runtime.useSupabase && api()) {
+    if (runtime.useCloudBase && api()) {
       try {
         await api().createLead(routePath().split('/')[1] || form.dataset.profileHandle || 'cj', lead);
         form.reset();
@@ -1238,7 +1237,7 @@
   }
 
   async function logout() {
-    if (runtime.useSupabase && api()) {
+    if (runtime.useCloudBase && api()) {
       try {
         await api().signOut();
       } catch (err) {
@@ -1247,7 +1246,7 @@
     }
     localStorage.removeItem(OS.STORAGE_KEY);
     runtime.db = loadLocalDB();
-    runtime.useSupabase = false;
+    runtime.useCloudBase = false;
     showToast('已退出');
     navigate('login');
   }
@@ -1467,10 +1466,10 @@
   window.addEventListener('hashchange', () => {
     closeResume();
     render(true);
-    hydrateFromSupabase();
+    hydrateFromCloudBase();
   });
 
   if (!location.hash && routePath() === 'home') navigate('home');
   render(false);
-  hydrateFromSupabase();
+  hydrateFromCloudBase();
 }());

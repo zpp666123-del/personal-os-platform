@@ -1,29 +1,24 @@
-# 个人能力 OS · V8 Productized Platform
+# 个人能力 OS · CloudBase 国内版
 
-这是一个静态前端 MVP，用于验证「个人能力主页生成平台」的成熟产品架构。当前版本已接入 Supabase Auth + Postgres；没有 Supabase 配置时会自动回退到本地 Demo。
-
-## 这版重点
-
-- 产品首页、登录页、应用工作台、公开阅读页分离。
-- 公开链接可以直接发给别人阅读：`#/u/cj`。
-- 网页版简历可以独立分享：`#/resume/cj`。
-- Profile Studio 保持左侧模块、中间编辑、右侧实时预览。
-- 公开页不再展示后台导航，访客只看到阅读型导航。
-- 导航重新居中，Studio 标题和三栏布局重新约束。
-- 动效保持轻量：滚动出现、光泽、轻微 hover，不做夸张位移。
-- 保留字段可见性、简历抽屉、发布草稿、模板、线索收件箱。
+这是一个静态前端 MVP，用来做个人数字名片、作品集、项目展示、IP 聚合和网页版简历。当前主线已切到腾讯云 CloudBase：静态托管、登录、文档数据库、云函数联系表单。未配置 CloudBase 时自动回退本地 Demo。
 
 ## 本地运行
 
 ```bash
 cd personal-os_platform_v8_deploy_ready
-python3 -m http.server 5173
+python -m http.server 5173
 ```
 
 访问：
 
 ```txt
 http://localhost:5173/index.html
+```
+
+国内线上站：
+
+```txt
+https://cloud1-d7gxeq5sja197907d-1439310375.tcloudbaseapp.com
 ```
 
 本地 Demo 账号：
@@ -36,66 +31,64 @@ http://localhost:5173/index.html
 ## 主要路由
 
 ```txt
-#/home                 产品首页
-#/login                登录 / 注册模拟
-#/dashboard            工作台
-#/studio/identity      Profile Studio：身份资料
-#/studio/visibility    隐私可见性
-#/studio/hero          主页叙事与能力记录
-#/studio/proof         能力证据库
-#/studio/projects      项目案例库
-#/studio/resume        完整简历档案
-#/studio/assets        数字资产库
-#/studio/posts         内容观点库
-#/studio/contact       发布与线索
-#/templates            模板系统
-#/pricing              定价草案
-#/u/cj                 公开主页，访客直读
-#/resume/cj            网页版简历，可打印保存 PDF
-#/inbox                联系线索收件箱
+#/home
+#/signup
+#/login
+#/dashboard
+#/studio/identity
+#/templates
+#/u/cj
+#/resume/cj
+#/inbox
 ```
 
-## Supabase 配置
+## CloudBase 配置
 
-1. 在 Supabase 新建项目，数据库密码只在 Supabase 控制台使用，不要放进前端或 Vercel 环境变量。
-2. 打开 Supabase SQL Editor，运行 [docs/supabase-schema.sql](./docs/supabase-schema.sql)。
-3. 在 Supabase Dashboard → Authentication → URL Configuration 设置：
+当前已接入环境：
 
 ```txt
-Site URL:
-https://personal-osplatformv8deployready.vercel.app
-
-Redirect URLs:
-https://personal-osplatformv8deployready.vercel.app/**
-http://localhost:5173/**
+EnvId: cloud1-d7gxeq5sja197907d
+Region: ap-shanghai
+Auth: 用户名/密码登录
 ```
 
-4. 获取 Project Settings → API 中的 Project URL 和 anon / publishable key。不要使用 service_role key。
-5. Vercel 环境变量：
+如需换环境：
 
-```txt
-SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
-SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+1. 在腾讯云 CloudBase 创建环境，拿到完整 `EnvId`、地域和 Publishable Key。
+2. 开启身份认证里的用户名/密码或邮箱登录。
+3. 创建文档数据库集合和权限，见 [docs/cloudbase-setup.md](./docs/cloudbase-setup.md)。
+4. 部署云函数 `submitLead`，用于公开页联系表单写入线索。
+5. 复制 `cloudbase-config.sample.js` 为 `cloudbase-config.js`，填入：
+
+```js
+window.CLOUDBASE_CONFIG = {
+  env: 'YOUR_FULL_CLOUDBASE_ENV_ID',
+  region: 'ap-shanghai',
+  accessKey: 'YOUR_CLOUDBASE_PUBLISHABLE_KEY'
+};
 ```
 
-6. 本地静态预览可以直接复制 `supabase-config.sample.js` 为 `supabase-config.js` 并填入公开 URL 和 anon key；留空则走本地 Demo fallback。
+6. 部署云函数和静态网站：
 
-## Supabase 数据闭环
+```bash
+npm install
+npx tcb login
+npx tcb fn deploy submitLead --force
+npx tcb hosting deploy .cloudbase-dist -e YOUR_FULL_CLOUDBASE_ENV_ID
+```
 
-- 登录 / 注册：Supabase Auth。
+CloudBase 静态托管里把索引文档和错误文档都设为 `index.html`，这样 `/u/:handle`、`/resume/:handle` 直达链接才能回到前端路由。
+
+## 数据闭环
+
+- 注册 / 登录：CloudBase Auth。
 - 登录后自动创建 `profiles` 草稿。
-- Studio 自动保存到 `profiles.draft_json`。
+- Studio 自动保存到 `profiles.draft`。
 - 发布写入 `published_profiles`。
-- `/u/:handle` 和 `/resume/:handle` 只读取 `published_profiles`。
-- 联系表单写入 `leads`。
-- Inbox 只读取当前登录用户自己 profile 下的 leads。
-- 私有草稿和线索读取依赖 RLS；前端只使用 anon / publishable key。
+- `/u/:handle` 和 `/resume/:handle` 读取 `published_profiles`。
+- 联系表单调用 `submitLead` 云函数写入 `leads`。
+- Inbox 只读取当前登录用户自己的 leads。
 
-## 当前后端接口
+## 旧海外版
 
-当前只保留一个公开配置接口：
-
-- `GET /api/health`：健康检查。
-- `GET /api/config`：返回公开的 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY` 给浏览器。
-
-`api/db` 仍可作为旧 Demo 参考，但当前前端不再依赖它保存数据。
+旧 Vercel + Supabase 线上站可以继续作为海外备份；这份主代码已经不再依赖 Supabase。

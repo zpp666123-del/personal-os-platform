@@ -4,22 +4,20 @@
 
 先准备干净静态目录，只上传浏览器需要的文件：
 
-```powershell
-Remove-Item .cloudbase-dist -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory .cloudbase-dist
-Copy-Item index.html,styles.css,app.js,data.js,cloudbase-config.js,cloudbase-client.js,cloudbase-api.js,.nojekyll .cloudbase-dist
+```bash
+npm run build:cloudbase
 ```
 
 ```bash
 npm install
 npx tcb login
-npx tcb hosting deploy .cloudbase-dist -e YOUR_FULL_CLOUDBASE_ENV_ID
+npm run deploy:hosting
 ```
 
 云函数：
 
 ```bash
-npx tcb fn deploy submitLead --force
+npm run deploy:function
 ```
 
 控制台还需要做三件事：

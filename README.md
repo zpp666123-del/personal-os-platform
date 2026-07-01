@@ -2,6 +2,39 @@
 
 这是一个静态前端 MVP，用来做个人数字名片、作品集、项目展示、IP 聚合和网页版简历。当前主线已切到腾讯云 CloudBase：静态托管、登录、文档数据库、云函数联系表单。未配置 CloudBase 时自动回退本地 Demo。
 
+## GitHub 上怎么说
+
+一句话：
+
+```txt
+个人能力 OS：一个面向个人品牌、作品集、简历主页和线索收集的轻量级 Web 平台。
+```
+
+英文仓库描述：
+
+```txt
+Personal Ability OS: a lightweight personal-brand platform for profiles, portfolios, resumes and lead capture, powered by Tencent CloudBase.
+```
+
+推荐 Topics：
+
+```txt
+personal-brand portfolio resume cloudbase static-site serverless crm
+```
+
+## GitHub 怎么维护
+
+日常只记这套流程：
+
+```bash
+git status
+git add .
+git commit -m "docs: update project notes"
+git push
+```
+
+当前本地分支是 `codex/cloudbase-domestic-stack`。要上线到 GitHub Pages，去 GitHub 开一个 PR 合并到 `main`，合并后 `.github/workflows/pages.yml` 会自动发布静态站。
+
 ## 本地运行
 
 ```bash
@@ -73,8 +106,8 @@ window.CLOUDBASE_CONFIG = {
 ```bash
 npm install
 npx tcb login
-npx tcb fn deploy submitLead --force
-npx tcb hosting deploy .cloudbase-dist -e YOUR_FULL_CLOUDBASE_ENV_ID
+npm run deploy:function
+npm run deploy:hosting
 ```
 
 CloudBase 静态托管里把索引文档和错误文档都设为 `index.html`，这样 `/u/:handle`、`/resume/:handle` 直达链接才能回到前端路由。
@@ -88,6 +121,26 @@ CloudBase 静态托管里把索引文档和错误文档都设为 `index.html`，
 - `/u/:handle` 和 `/resume/:handle` 读取 `published_profiles`。
 - 联系表单调用 `submitLead` 云函数写入 `leads`。
 - Inbox 只读取当前登录用户自己的 leads。
+
+## 后续升级路线
+
+先按这个顺序做，别一上来做太大：
+
+1. **内容能力**：头像上传、项目封面、PDF 简历上传。
+2. **线索管理**：Inbox 增加状态、备注、导出 CSV、邮件通知。
+3. **模板能力**：增加 2-3 套公开页模板和主题色。
+4. **增长能力**：访问量、表单转化率、来源统计。
+5. **商业化**：自定义域名、套餐限制、支付、团队协作。
+
+## 优化优先级
+
+现在最值得优化的是这几件：
+
+1. **安全**：确认 GitHub 里只放 CloudBase Publishable Key，不放服务端密钥。
+2. **部署**：把 `.cloudbase-dist` 的复制命令做成 npm script，减少手工操作。
+3. **体验**：补齐加载中、保存失败、空状态和移动端细节。
+4. **性能**：图片懒加载、压缩静态资源、减少首屏不必要脚本。
+5. **代码维护**：`app.js` 变难改时再拆模块，现在先别为了“看起来高级”拆。
 
 ## 旧海外版
 

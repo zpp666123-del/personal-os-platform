@@ -8,6 +8,10 @@
   const OS = window.AbilityOSV7;
   let recordIndex = 0;
   let saveTimer = null;
+  let saveSeq = 0;
+  let saveAbort = null;
+  let publishing = false;
+  const CANONICAL_ORIGIN = 'https://personal-osplatformv8deployready.vercel.app';
   const runtime = {
     db: null,
     useSupabase: false,
@@ -195,7 +199,8 @@
     } catch (err) {
       console.warn(err);
       runtime.useSupabase = false;
-      showToast('Supabase 暂不可用，已显示本地 Demo');
+      const onProduction = location.hostname === new URL(CANONICAL_ORIGIN).hostname;
+      showToast(onProduction ? 'Supabase 配置异常，请稍后重试' : 'Supabase 暂不可用，已显示本地 Demo');
     } finally {
       runtime.hydrating = false;
     }
@@ -204,16 +209,25 @@
   function scheduleDraftSave() {
     const service = api();
     if (!service) return;
+    const seq = ++saveSeq;
+    if (saveAbort) saveAbort.abort();
+    const controller = new AbortController();
+    saveAbort = controller;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
       try {
         if (!(await service.getUser())) return;
         const row = currentProfile(loadDB());
         if (!row || !row.id) return;
-        upsertProfile(await service.saveDraft(row), { current: true });
+        const saved = await service.saveDraft(row, controller.signal);
+        if (seq === saveSeq && !controller.signal.aborted) upsertProfile(saved, { current: true });
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.warn(err);
-        showToast('草稿保存失败，请稍后重试');
+        const message = String(err.message || '').toLowerCase();
+        showToast(message.includes('duplicate') || message.includes('unique') ? '主页 handle 已被占用' : '草稿保存失败，请稍后重试');
+      } finally {
+        if (seq === saveSeq) saveAbort = null;
       }
     }, 600);
   }
@@ -269,14 +283,8 @@
     return canShow(p, key, context) ? esc(value || '') : `<span class="muted">${fallback}</span>`;
   }
 
-  function staticBaseUrl() {
-    const cleanPath = location.pathname.replace(/\/(u|resume)\/[^/]+$/, '/index.html');
-    return cleanPath.endsWith('/') ? `${location.origin}${cleanPath}index.html` : `${location.origin}${cleanPath}`;
-  }
-
   function prettyBaseUrl() {
-    if (!location.origin || location.origin === 'null') return staticBaseUrl();
-    return location.origin;
+    return CANONICAL_ORIGIN;
   }
 
   function publicUrl(row) {
@@ -847,10 +855,10 @@
           <article class="contact-card tilt-card motion-card"><p class="section-kicker">Contact</p><h2>面试 / 合作入口。</h2><p>${esc(p.contact.note)}</p><p>${visibleValue(p,'email',p.identity.email,'public')}</p></article>
           <article class="contact-card">
             <form class="contact-form" data-contact-form data-profile-id="${esc(row.id)}" data-profile-handle="${esc(row.handle)}">
-              <label class="field"><span>你的名字</span><input name="name" required /></label>
-              <label class="field"><span>邮箱</span><input name="email" type="email" required /></label>
-              <label class="field full"><span>联系目的</span><select name="intent">${p.contact.intents.map((x) => `<option>${esc(x)}</option>`).join('')}</select></label>
-              <label class="field full"><span>留言</span><textarea name="message" required placeholder="请简要描述机会、合作或想查看的信息..."></textarea></label>
+              <label class="field"><span>你的名字</span><input name="name" maxlength="80" autocomplete="name" required /></label>
+              <label class="field"><span>邮箱</span><input name="email" type="email" maxlength="160" autocomplete="email" required /></label>
+              <label class="field full"><span>联系目的</span><select name="intent" required>${p.contact.intents.map((x) => `<option>${esc(x)}</option>`).join('')}</select></label>
+              <label class="field full"><span>留言</span><textarea name="message" maxlength="1200" required placeholder="请简要描述机会、合作或想查看的信息..."></textarea></label>
               <button class="btn primary magnetic full" type="submit">发送消息</button>
             </form>
           </article>
@@ -952,28 +960,39 @@
   }
 
   async function publishDraft() {
+    if (publishing) return;
+    publishing = true;
+    document.querySelectorAll('[data-action="publish"]').forEach((button) => { button.disabled = true; });
     const db = loadDB();
     const row = currentProfile(db);
     const p = ensure(row);
-    row.handle = (p.identity.handle || row.handle).replace(/[^a-z0-9-]/gi, '').toLowerCase() || row.handle;
-    p.identity.handle = row.handle;
-    row.published = clone(p);
-    row.publishedAt = new Date().toISOString();
-    row.updatedAt = new Date().toISOString();
-    saveDB(db, { localOnly: runtime.useSupabase });
-    if (runtime.useSupabase && api()) {
-      clearTimeout(saveTimer);
-      try {
-        upsertProfile(await api().publishProfile(row), { current: true });
-        saveDB(loadDB(), { localOnly: true });
-      } catch (err) {
-        console.warn(err);
-        showToast('发布失败，请检查 Supabase 配置或 RLS');
-        return;
+    try {
+      row.handle = (p.identity.handle || row.handle).replace(/[^a-z0-9-]/gi, '').toLowerCase() || row.handle;
+      p.identity.handle = row.handle;
+      row.published = clone(p);
+      row.publishedAt = new Date().toISOString();
+      row.updatedAt = new Date().toISOString();
+      saveDB(db, { localOnly: runtime.useSupabase });
+      if (runtime.useSupabase && api()) {
+        clearTimeout(saveTimer);
+        if (saveAbort) saveAbort.abort();
+        saveSeq += 1;
+        try {
+          upsertProfile(await api().publishProfile(row), { current: true });
+          saveDB(loadDB(), { localOnly: true });
+        } catch (err) {
+          console.warn(err);
+          const message = String(err.message || '').toLowerCase();
+          showToast(message.includes('duplicate') || message.includes('unique') ? '发布失败：handle 已被占用' : '发布失败，请检查 Supabase 配置或 RLS');
+          return;
+        }
       }
+      refreshPreview();
+      showToast('已发布到公开页');
+    } finally {
+      publishing = false;
+      document.querySelectorAll('[data-action="publish"]').forEach((button) => { button.disabled = false; });
     }
-    refreshPreview();
-    showToast('已发布到公开页');
   }
 
   function formatInput(input) {
@@ -1125,12 +1144,19 @@
   }
 
   async function contact(form) {
+    form.querySelectorAll('input[name="name"], input[name="email"], textarea[name="message"]').forEach((input) => {
+      input.value = input.value.trim();
+    });
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
     const fd = new FormData(form);
     const lead = {
-      name: String(fd.get('name') || ''),
-      email: String(fd.get('email') || ''),
-      intent: String(fd.get('intent') || ''),
-      message: String(fd.get('message') || '')
+      name: String(fd.get('name') || '').trim(),
+      email: String(fd.get('email') || '').trim(),
+      intent: String(fd.get('intent') || '').trim(),
+      message: String(fd.get('message') || '').trim()
     };
     if (runtime.useSupabase && api()) {
       try {
@@ -1166,6 +1192,7 @@
         console.warn(err);
       }
     }
+    localStorage.removeItem(OS.STORAGE_KEY);
     runtime.db = loadLocalDB();
     runtime.useSupabase = false;
     showToast('已退出');

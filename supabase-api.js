@@ -197,13 +197,13 @@
     return toProfile(data, published.data);
   };
 
-  api.saveDraft = async function saveDraft(profileRow) {
+  api.saveDraft = async function saveDraft(profileRow, signal) {
     const client = await getClient();
     const draft = normalizeDraft(profileRow.draft, profileRow.handle);
     const handle = slugifyHandle(draft.identity.handle || profileRow.handle);
     draft.identity.handle = handle;
 
-    const { data, error } = await client
+    let query = client
       .from('profiles')
       .update({
         handle,
@@ -216,6 +216,8 @@
       .eq('id', profileRow.id)
       .select('*')
       .single();
+    if (signal && typeof query.abortSignal === 'function') query = query.abortSignal(signal);
+    const { data, error } = await query;
     if (error) throw error;
     return toProfile(data, null);
   };

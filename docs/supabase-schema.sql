@@ -98,6 +98,26 @@ create index if not exists idx_leads_profile_id_created_at on public.leads(profi
 create index if not exists idx_versions_profile_id_version on public.profile_versions(profile_id, version_no desc);
 create index if not exists idx_analytics_profile_id_created_at on public.analytics_events(profile_id, created_at desc);
 
+alter table public.leads drop constraint if exists leads_visitor_name_length;
+alter table public.leads add constraint leads_visitor_name_length
+  check (visitor_name is null or char_length(visitor_name) <= 80);
+
+alter table public.leads drop constraint if exists leads_visitor_email_format;
+alter table public.leads add constraint leads_visitor_email_format
+  check (visitor_email is null or visitor_email = '' or visitor_email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+alter table public.leads drop constraint if exists leads_intent_length;
+alter table public.leads add constraint leads_intent_length
+  check (intent is null or char_length(intent) <= 80);
+
+alter table public.leads drop constraint if exists leads_message_length;
+alter table public.leads add constraint leads_message_length
+  check (message is null or char_length(message) <= 1200);
+
+alter table public.leads drop constraint if exists leads_status_check;
+alter table public.leads add constraint leads_status_check
+  check (status in ('new', 'read', 'archived'));
+
 drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
 before update on public.profiles
@@ -251,7 +271,14 @@ drop policy if exists "public can write analytics" on public.analytics_events;
 create policy "public can write analytics"
 on public.analytics_events for insert
 to anon, authenticated
-with check (true);
+with check (
+  profile_id is not null
+  and exists (
+    select 1 from public.published_profiles pp
+    where pp.profile_id = analytics_events.profile_id
+      and (analytics_events.profile_handle is null or pp.handle = analytics_events.profile_handle)
+  )
+);
 
 drop policy if exists "owners can read analytics" on public.analytics_events;
 create policy "owners can read analytics"

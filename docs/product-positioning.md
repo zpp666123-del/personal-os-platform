@@ -42,7 +42,7 @@
 | 上传 | 原生 `input type="file"` + CloudBase Storage | 需要断点续传/大文件队列 |
 | 弹层 | 现有命令面板；新增弹层优先用 `<dialog>` | 需要复杂嵌套弹层 |
 | 展开收起 | 原生 `<details>` 或现有 CSS | 需要虚拟列表 |
-| 拖拽排序 | 先用上移/下移按钮 | 真有用户要求拖拽，再评估 SortableJS |
+| 拖拽排序 | 已用上移/下移按钮 | 真有用户要求拖拽，再评估 SortableJS |
 | 数据图表 | 先用数字卡片和简单条形 CSS | 有访问统计后，再评估 Chart.js |
 | 动画 | 现有 CSS transition/transform | 出现复杂时间线，再评估 Motion |
 | UI 组件库 | 暂不引入 | 页面组件超过 20 个且样式维护吃力，再评估 Web Components/Shoelace |

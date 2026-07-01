@@ -359,6 +359,9 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .list-row { padding: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.58); border-radius: 24px; }
 .list-row-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
 .list-row-head b { letter-spacing: -.03em; }
+.list-actions { display: flex; gap: 6px; align-items: center; }
+.btn.icon { width: 34px; min-width: 34px; padding-inline: 0; }
+.btn:disabled { opacity: .38; pointer-events: none; }
 .visibility-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .visibility-row { display: grid; grid-template-columns: 1fr 160px; gap: 10px; align-items: center; border: 1px solid var(--line); background: rgba(255,255,255,.62); border-radius: 18px; padding: 10px 12px; }
 .visibility-row b { font-size: 14px; }

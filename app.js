@@ -692,7 +692,14 @@
     const items = Array.isArray(list) ? list : [];
     return `<div class="list-editor">
       ${items.map((item, index) => `<article class="list-row">
-        <div class="list-row-head"><b>${esc(item.title || item.name || item.label || `第 ${index + 1} 项`)}</b><button class="btn tiny" type="button" data-action="remove-list" data-list="${esc(path)}" data-index="${index}">删除</button></div>
+        <div class="list-row-head">
+          <b>${esc(item.title || item.name || item.label || `第 ${index + 1} 项`)}</b>
+          <div class="list-actions">
+            <button class="btn tiny icon" type="button" data-action="move-list" data-list="${esc(path)}" data-index="${index}" data-dir="-1" aria-label="上移" ${index === 0 ? 'disabled' : ''}>&uarr;</button>
+            <button class="btn tiny icon" type="button" data-action="move-list" data-list="${esc(path)}" data-index="${index}" data-dir="1" aria-label="下移" ${index === items.length - 1 ? 'disabled' : ''}>&darr;</button>
+            <button class="btn tiny" type="button" data-action="remove-list" data-list="${esc(path)}" data-index="${index}">删除</button>
+          </div>
+        </div>
         <div class="form-grid">
           ${fields.map(([key, label, kind]) => listInput(path, index, key, label, item[key], kind)).join('')}
         </div>
@@ -1121,6 +1128,22 @@
     showToast('已删除');
   }
 
+  function moveList(path, index, dir) {
+    const db = loadDB();
+    const row = currentProfile(db);
+    const p = ensure(row);
+    const list = getPath(p, path) || [];
+    const from = Number(index);
+    const to = from + Number(dir);
+    if (!list[from] || to < 0 || to >= list.length) return;
+    list.splice(to, 0, list.splice(from, 1)[0]);
+    setPath(p, path, list);
+    row.updatedAt = new Date().toISOString();
+    saveDB(db);
+    render(false);
+    showToast('顺序已更新');
+  }
+
   function copyPublicUrl() {
     const row = currentProfile(loadDB());
     if (navigator.clipboard) navigator.clipboard.writeText(publicUrl(row));
@@ -1425,6 +1448,7 @@
     if (action === 'select-template') selectTemplate(actionEl.dataset.templateId);
     if (action === 'add-list') addList(actionEl.dataset.list);
     if (action === 'remove-list') removeList(actionEl.dataset.list, actionEl.dataset.index);
+    if (action === 'move-list') moveList(actionEl.dataset.list, actionEl.dataset.index, actionEl.dataset.dir);
     if (action === 'export-json') exportJSON();
     if (action === 'reset-demo') resetDemo();
     if (action === 'open-resume') openResume();

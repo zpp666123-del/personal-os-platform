@@ -1,29 +1,57 @@
-# 个人能力 OS · V8 Productized Platform
+# 个人能力 OS · CloudBase 国内版
 
-这是一个静态前端 MVP，用于验证「个人能力主页生成平台」的成熟产品架构。当前版本已接入 Supabase Auth + Postgres；没有 Supabase 配置时会自动回退到本地 Demo。
+这是一个静态前端 MVP，用来做个人数字名片、作品集、项目展示、IP 聚合和网页版简历。当前主线已切到腾讯云 CloudBase：静态托管、登录、文档数据库、云函数联系表单。未配置 CloudBase 时自动回退本地 Demo。
 
-## 这版重点
+## GitHub 上怎么说
 
-- 产品首页、登录页、应用工作台、公开阅读页分离。
-- 公开链接可以直接发给别人阅读：`#/u/cj`。
-- 网页版简历可以独立分享：`#/resume/cj`。
-- Profile Studio 保持左侧模块、中间编辑、右侧实时预览。
-- 公开页不再展示后台导航，访客只看到阅读型导航。
-- 导航重新居中，Studio 标题和三栏布局重新约束。
-- 动效保持轻量：滚动出现、光泽、轻微 hover，不做夸张位移。
-- 保留字段可见性、简历抽屉、发布草稿、模板、线索收件箱。
+一句话：
+
+```txt
+个人能力 OS：一个面向个人品牌、作品集、简历主页和线索收集的轻量级 Web 平台。
+```
+
+英文仓库描述：
+
+```txt
+Personal Ability OS: a lightweight personal-brand platform for profiles, portfolios, resumes and lead capture, powered by Tencent CloudBase.
+```
+
+推荐 Topics：
+
+```txt
+personal-brand portfolio resume cloudbase static-site serverless crm
+```
+
+## GitHub 怎么维护
+
+日常只记这套流程：
+
+```bash
+git status
+git add .
+git commit -m "docs: update project notes"
+git push
+```
+
+当前本地分支是 `codex/cloudbase-domestic-stack`。要上线到 GitHub Pages，去 GitHub 开一个 PR 合并到 `main`，合并后 `.github/workflows/pages.yml` 会自动发布静态站。
 
 ## 本地运行
 
 ```bash
 cd personal-os_platform_v8_deploy_ready
-python3 -m http.server 5173
+python -m http.server 5173
 ```
 
 访问：
 
 ```txt
 http://localhost:5173/index.html
+```
+
+国内线上站：
+
+```txt
+https://cloud1-d7gxeq5sja197907d-1439310375.tcloudbaseapp.com
 ```
 
 本地 Demo 账号：
@@ -36,66 +64,84 @@ http://localhost:5173/index.html
 ## 主要路由
 
 ```txt
-#/home                 产品首页
-#/login                登录 / 注册模拟
-#/dashboard            工作台
-#/studio/identity      Profile Studio：身份资料
-#/studio/visibility    隐私可见性
-#/studio/hero          主页叙事与能力记录
-#/studio/proof         能力证据库
-#/studio/projects      项目案例库
-#/studio/resume        完整简历档案
-#/studio/assets        数字资产库
-#/studio/posts         内容观点库
-#/studio/contact       发布与线索
-#/templates            模板系统
-#/pricing              定价草案
-#/u/cj                 公开主页，访客直读
-#/resume/cj            网页版简历，可打印保存 PDF
-#/inbox                联系线索收件箱
+#/home
+#/signup
+#/login
+#/dashboard
+#/studio/identity
+#/templates
+#/u/cj
+#/resume/cj
+#/inbox
 ```
 
-## Supabase 配置
+## CloudBase 配置
 
-1. 在 Supabase 新建项目，数据库密码只在 Supabase 控制台使用，不要放进前端或 Vercel 环境变量。
-2. 打开 Supabase SQL Editor，运行 [docs/supabase-schema.sql](./docs/supabase-schema.sql)。
-3. 在 Supabase Dashboard → Authentication → URL Configuration 设置：
+当前已接入环境：
 
 ```txt
-Site URL:
-https://personal-osplatformv8deployready.vercel.app
-
-Redirect URLs:
-https://personal-osplatformv8deployready.vercel.app/**
-http://localhost:5173/**
+EnvId: cloud1-d7gxeq5sja197907d
+Region: ap-shanghai
+Auth: 用户名/密码登录
 ```
 
-4. 获取 Project Settings → API 中的 Project URL 和 anon / publishable key。不要使用 service_role key。
-5. Vercel 环境变量：
+如需换环境：
 
-```txt
-SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
-SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+1. 在腾讯云 CloudBase 创建环境，拿到完整 `EnvId`、地域和 Publishable Key。
+2. 开启身份认证里的用户名/密码或邮箱登录。
+3. 创建文档数据库集合和权限，见 [docs/cloudbase-setup.md](./docs/cloudbase-setup.md)。
+4. 部署云函数 `submitLead`，用于公开页联系表单写入线索。
+5. 复制 `cloudbase-config.sample.js` 为 `cloudbase-config.js`，填入：
+
+```js
+window.CLOUDBASE_CONFIG = {
+  env: 'YOUR_FULL_CLOUDBASE_ENV_ID',
+  region: 'ap-shanghai',
+  accessKey: 'YOUR_CLOUDBASE_PUBLISHABLE_KEY'
+};
 ```
 
-6. 本地静态预览可以直接复制 `supabase-config.sample.js` 为 `supabase-config.js` 并填入公开 URL 和 anon key；留空则走本地 Demo fallback。
+6. 部署云函数和静态网站：
 
-## Supabase 数据闭环
+```bash
+npm install
+npx tcb login
+npm run deploy:function
+npm run deploy:hosting
+```
 
-- 登录 / 注册：Supabase Auth。
+CloudBase 静态托管里把索引文档和错误文档都设为 `index.html`，这样 `/u/:handle`、`/resume/:handle` 直达链接才能回到前端路由。
+
+## 数据闭环
+
+- 注册 / 登录：CloudBase Auth。
 - 登录后自动创建 `profiles` 草稿。
-- Studio 自动保存到 `profiles.draft_json`。
+- Studio 自动保存到 `profiles.draft`。
 - 发布写入 `published_profiles`。
-- `/u/:handle` 和 `/resume/:handle` 只读取 `published_profiles`。
-- 联系表单写入 `leads`。
-- Inbox 只读取当前登录用户自己 profile 下的 leads。
-- 私有草稿和线索读取依赖 RLS；前端只使用 anon / publishable key。
+- `/u/:handle` 和 `/resume/:handle` 读取 `published_profiles`。
+- 联系表单调用 `submitLead` 云函数写入 `leads`。
+- Inbox 只读取当前登录用户自己的 leads。
 
-## 当前后端接口
+## 后续升级路线
 
-当前只保留一个公开配置接口：
+先按这个顺序做，别一上来做太大：
 
-- `GET /api/health`：健康检查。
-- `GET /api/config`：返回公开的 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY` 给浏览器。
+1. **内容能力**：头像上传、项目封面、PDF 简历上传。
+2. **线索管理**：Inbox 增加状态、备注、导出 CSV、邮件通知。
+3. **模板能力**：增加 2-3 套公开页模板和主题色。
+4. **增长能力**：访问量、表单转化率、来源统计。
+5. **商业化**：自定义域名、套餐限制、支付、团队协作。
 
-`api/db` 仍可作为旧 Demo 参考，但当前前端不再依赖它保存数据。
+## 优化优先级
+
+现在最值得优化的是这几件：
+
+1. **安全**：确认 GitHub 里只放 CloudBase Publishable Key，不放服务端密钥。
+2. **部署**：把 `.cloudbase-dist` 的复制命令做成 npm script，减少手工操作。
+3. **体验**：补齐加载中、保存失败、空状态和移动端细节。
+4. **性能**：图片懒加载、压缩静态资源、减少首屏不必要脚本。
+5. **代码维护**：`app.js` 变难改时再拆模块，现在先别为了“看起来高级”拆。
+
+## 旧海外版
+
+旧 Vercel + Supabase 线上站可以继续作为海外备份；这份主代码已经不再依赖 Supabase。

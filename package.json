@@ -1,11 +1,15 @@
 {
   "scripts": {
-    "serve": "python3 -m http.server 5173",
-    "deploy:vercel": "vercel --prod",
-    "deploy:cloudflare": "wrangler pages deploy . --project-name personal-os-platform"
+    "serve": "python -m http.server 5173",
+    "build:cloudbase": "node scripts/build-cloudbase.js",
+    "deploy:hosting": "npm run build:cloudbase && tcb hosting deploy .cloudbase-dist",
+    "deploy:function": "tcb fn deploy submitLead --force"
   },
   "name": "personal-os-platform-v8-productized",
-  "version": "8.1.0-deploy-ready",
+  "version": "8.2.0-cloudbase",
   "private": true,
-  "description": "Deploy-ready static MVP for Personal Ability OS platform with Vercel, Netlify, Cloudflare and GitHub Pages configs."
+  "description": "Static MVP for Personal Ability OS platform with CloudBase Auth, document database and static hosting.",
+  "devDependencies": {
+    "@cloudbase/cli": "^3.5.9"
+  }
 }

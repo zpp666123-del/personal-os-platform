@@ -102,7 +102,7 @@
     resume: {
       summary: 'AI 产品、全栈开发和内容输出复合背景。适合需要快速验证想法、搭建原型、沉淀案例和推动产品落地的团队。',
       skills: ['AI 产品', 'Agent 开发', 'React', 'Node.js', '产品设计', '数据分析', '内容创作', '增长验证'],
-      stack: ['Figma', 'Cursor', 'VS Code', 'React', 'Next.js', 'Node', 'Python', 'Supabase', 'Vercel'],
+      stack: ['Figma', 'Cursor', 'VS Code', 'React', 'Next.js', 'Node', 'Python', 'CloudBase'],
       expectations: {
         roles: 'AI 产品经理 / FDE / 全栈开发',
         cities: '上海、杭州、深圳、远程',
@@ -117,7 +117,7 @@
         { period: '2022 — 2026', company: '产品实践项目', role: 'AI 产品与全栈开发', location: 'Remote / Hybrid', desc: '构建 Agent、知识库、自动化、数据中台等项目。', result: '独立完成多端页面与部署，把模糊需求转化为可验证 MVP。' }
       ],
       projectExperiences: [
-        { period: '2026', title: '企业知识库问答系统', role: '产品设计 / 全栈实现', desc: '基于文档解析、向量检索和大模型生成搭建内部问答助手。', result: '支持引用、权限和多源检索。', stack: ['RAG', 'Next.js', 'Supabase'] },
+        { period: '2026', title: '企业知识库问答系统', role: '产品设计 / 全栈实现', desc: '基于文档解析、向量检索和大模型生成搭建内部问答助手。', result: '支持引用、权限和多源检索。', stack: ['RAG', 'Next.js', 'CloudBase'] },
         { period: '2026', title: '个人主页生成平台', role: '产品 Owner', desc: '从单人作品集扩展到多人可用的小平台。', result: '完成可注册、编辑、发布、收线索的静态 MVP。', stack: ['Vanilla JS', 'localStorage', 'Template System'] }
       ],
       certificates: [

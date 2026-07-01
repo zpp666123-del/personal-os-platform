@@ -116,19 +116,31 @@
   };
 
   api.signInOrSignUp = async function signInOrSignUp(email, password) {
+    try {
+      return await api.signIn(email, password);
+    } catch (err) {
+      const message = String(err.message || '').toLowerCase();
+      if (!message.includes('invalid login credentials')) throw err;
+    }
+
+    return api.signUp(email, password);
+  };
+
+  api.signIn = async function signIn(email, password) {
     const client = await getClient();
-    const signedIn = await client.auth.signInWithPassword({ email, password });
-    if (!signedIn.error) return signedIn.data;
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
+  };
 
-    const message = String(signedIn.error.message || '').toLowerCase();
-    if (!message.includes('invalid login credentials')) throw signedIn.error;
-
+  api.signUp = async function signUp(email, password) {
+    const client = await getClient();
     const redirectTo = location.origin && location.origin !== 'null'
       ? `${location.origin}/#/dashboard`
       : undefined;
-    const signedUp = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
-    if (signedUp.error) throw signedUp.error;
-    return signedUp.data;
+    const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } });
+    if (error) throw error;
+    return data;
   };
 
   api.signOut = async function signOut() {

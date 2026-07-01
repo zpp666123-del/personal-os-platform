@@ -352,6 +352,9 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 }
 .field textarea, .contact-form textarea { min-height: 112px; resize: vertical; line-height: 1.7; }
 .field input:focus, .field textarea:focus, .field select:focus, .contact-form input:focus, .contact-form textarea:focus, .contact-form select:focus, .login-card input:focus { border-color: rgba(49,94,255,.55); box-shadow: 0 0 0 5px rgba(49,94,255,.10); background: #fff; }
+.check-line { display: flex; align-items: flex-start; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.check-line input { width: 16px; height: 16px; margin-top: 2px; accent-color: #111; }
+.check-line a { color: #111; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
 .list-editor { display: grid; gap: 14px; }
 .list-row { padding: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.58); border-radius: 24px; }
 .list-row-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }

@@ -25,10 +25,13 @@
     { "source": "/resume/:handle", "destination": "/" },
     { "source": "/home", "destination": "/" },
     { "source": "/login", "destination": "/" },
+    { "source": "/signup", "destination": "/" },
     { "source": "/dashboard", "destination": "/" },
     { "source": "/templates", "destination": "/" },
     { "source": "/pricing", "destination": "/" },
     { "source": "/inbox", "destination": "/" },
+    { "source": "/terms", "destination": "/" },
+    { "source": "/privacy", "destination": "/" },
     { "source": "/studio/:section", "destination": "/" }
   ],
   "headers": [

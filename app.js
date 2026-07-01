@@ -263,7 +263,7 @@
     if (uIndex >= 0 && parts[uIndex + 1]) return `u/${parts[uIndex + 1]}`;
     const rIndex = parts.indexOf('resume');
     if (rIndex >= 0 && parts[rIndex + 1]) return `resume/${parts[rIndex + 1]}`;
-    const known = ['home', 'dashboard', 'studio', 'templates', 'pricing', 'inbox', 'login', 'signup'];
+    const known = ['home', 'dashboard', 'studio', 'templates', 'pricing', 'inbox', 'login', 'signup', 'terms', 'privacy'];
     return known.includes(last) ? last : 'home';
   }
 
@@ -334,7 +334,7 @@
         </nav>
         <div class="nav-actions">
           <a class="top-cta light magnetic" href="#/login">登录</a>
-          <a class="top-cta magnetic" href="#/studio/identity">开始创建</a>
+          <a class="top-cta magnetic" href="#/signup">注册</a>
         </div>
       </header>`;
   }
@@ -387,7 +387,7 @@
             <h1 class="hero-title">把个人能力，做成一个<span class="mark">成熟的在线产品。</span></h1>
             <p class="lede">从个人样板开始，但用平台级结构来设计：资料档案、证据库、简历抽屉、模板系统、发布流程、线索收件箱与隐私可见性，全部围绕“可验证、可连接、可成交”的个人主页。</p>
             <div class="actions">
-              <a class="btn primary magnetic" href="#/studio/identity">创建我的主页</a>
+              <a class="btn primary magnetic" href="#/signup">创建我的主页</a>
               <a class="btn ghost magnetic" href="#/dashboard">进入产品工作台</a>
               <a class="btn ghost magnetic" href="#/pricing">查看产品版本</a>
             </div>
@@ -934,26 +934,60 @@
       </main>`);
   }
 
-  function loginPage() {
+  function termsPage() {
+    return shell(`
+      <main class="page">
+        <section class="simple-hero" data-reveal>
+          <p class="eyebrow">Terms</p>
+          <h1>用户协议。</h1>
+          <p>使用个人能力 OS 即表示你同意用真实、合法、可公开分享的资料创建个人主页，并自行负责发布内容的准确性和授权。</p>
+        </section>
+        <section class="feature-grid" data-reveal>
+          <article class="feature-card"><span>01</span><h3>账号</h3><p>你需要保护自己的登录信息。发现异常使用时，请尽快退出登录并联系我们处理。</p></article>
+          <article class="feature-card"><span>02</span><h3>内容</h3><p>你发布的主页、简历、项目和联系方式由你维护。不要上传侵权、违法、误导或不适合公开传播的内容。</p></article>
+          <article class="feature-card"><span>03</span><h3>服务</h3><p>当前产品处于 MVP 阶段，可能继续调整模板、字段和发布体验。重要资料建议自行保留备份。</p></article>
+        </section>
+      </main>`);
+  }
+
+  function privacyPage() {
+    return shell(`
+      <main class="page">
+        <section class="simple-hero" data-reveal>
+          <p class="eyebrow">Privacy</p>
+          <h1>隐私说明。</h1>
+          <p>我们只收集运行个人主页所需的信息：账号邮箱、Profile 草稿、发布后的公开资料，以及访客主动提交的联系线索。</p>
+        </section>
+        <section class="feature-grid" data-reveal>
+          <article class="feature-card"><span>01</span><h3>草稿</h3><p>草稿资料只供登录用户自己编辑查看，依赖 Supabase RLS 做访问控制。</p></article>
+          <article class="feature-card"><span>02</span><h3>公开页</h3><p>点击发布后，公开主页和网页版简历会对访问链接的人可见。字段可见性由你在 Studio 中控制。</p></article>
+          <article class="feature-card"><span>03</span><h3>线索</h3><p>访客提交的姓名、邮箱和留言只展示给主页拥有者，用于求职、合作或进一步沟通。</p></article>
+        </section>
+      </main>`);
+  }
+
+  function loginPage(mode = routePath()) {
     const demo = !runtime.useSupabase;
+    const isSignup = mode === 'signup';
     return `
       <main class="auth-page">
         <a class="auth-logo" href="#/home"><span class="brand-mark"></span><b>个人能力 OS</b><small>Productized</small></a>
         <section class="auth-shell" data-reveal>
           <div class="auth-copy">
             <p class="eyebrow">Account</p>
-            <h1>登录后编辑主页；公开链接无需登录即可阅读。</h1>
-            <p>产品架构分为两条路径：创作者进入工作台维护资料，访客通过公开链接直接阅读个人主页、简历和联系方式。</p>
-            <div class="auth-flow"><span>登录 / 注册</span><i></i><span>Profile Studio</span><i></i><span>发布公开页</span><i></i><span>/u/handle 直接分享</span></div>
+            <h1>${isSignup ? '注册后马上创建你的个人主页。' : '登录后继续编辑你的个人主页。'}</h1>
+            <p>${isSignup ? '新账号会自动生成一个 Profile 草稿；你可以编辑资料、发布公开页，然后把链接发给面试官、合作方或朋友。' : '已注册用户可以回到工作台维护资料、发布公开页、查看联系线索。'}</p>
+            <div class="auth-flow"><span>${isSignup ? '注册账号' : '登录账号'}</span><i></i><span>Profile Studio</span><i></i><span>发布公开页</span><i></i><span>/u/handle 直接分享</span></div>
           </div>
-          <form class="login-card tilt-card motion-card" data-login-form>
-            <p class="eyebrow">Login</p>
-            <h2>进入你的 Profile Studio</h2>
-            <p class="muted">${demo ? '本地 Demo 登录。' : 'Supabase Auth 登录 / 注册。'}新邮箱会自动创建一个主页；访客看公开页不需要账号。</p>
-            <label class="field"><span>邮箱</span><input name="email" type="email" value="${demo ? 'demo@ability.local' : ''}" required /></label>
-            <label class="field"><span>密码</span><input name="password" type="password" value="${demo ? 'demo123' : ''}" required /></label>
-            <button class="btn primary magnetic" type="submit">登录 / 创建账号</button>
-            <div class="login-links"><a href="#/home">返回产品首页</a><a href="#/u/cj">查看公开示例</a></div>
+          <form class="login-card tilt-card motion-card" data-login-form data-auth-mode="${isSignup ? 'signup' : 'login'}">
+            <p class="eyebrow">${isSignup ? 'Sign up' : 'Login'}</p>
+            <h2>${isSignup ? '创建账号' : '进入 Profile Studio'}</h2>
+            <p class="muted">${demo ? '本地 Demo 模式。' : (isSignup ? 'Supabase Auth 注册。' : 'Supabase Auth 登录。')}访客看公开页不需要账号。</p>
+            <label class="field"><span>邮箱</span><input name="email" type="email" autocomplete="email" value="${demo ? 'demo@ability.local' : ''}" required /></label>
+            <label class="field"><span>密码</span><input name="password" type="password" autocomplete="${isSignup ? 'new-password' : 'current-password'}" ${demo && !isSignup ? '' : 'minlength="8"'} value="${demo && !isSignup ? 'demo123' : ''}" required /></label>
+            ${isSignup ? '<label class="field"><span>确认密码</span><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required /></label><label class="check-line"><input name="agree" type="checkbox" required /><span>我同意 <a href="#/terms">用户协议</a> 和 <a href="#/privacy">隐私说明</a></span></label>' : ''}
+            <button class="btn primary magnetic" type="submit">${isSignup ? '注册并进入工作台' : '登录'}</button>
+            <div class="login-links"><a href="${isSignup ? '#/login' : '#/signup'}">${isSignup ? '已有账号，去登录' : '没有账号，去注册'}</a><a href="#/u/cj">查看公开示例</a></div>
           </form>
         </section>
       </main>`;
@@ -1098,29 +1132,44 @@
   }
 
   async function login(form) {
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
     const fd = new FormData(form);
+    const mode = form.dataset.authMode || 'login';
     const email = String(fd.get('email') || '').trim();
     const password = String(fd.get('password') || '').trim();
+    const confirmPassword = String(fd.get('confirmPassword') || '').trim();
+    if (mode === 'signup' && password !== confirmPassword) {
+      showToast('两次输入的密码不一致');
+      return;
+    }
     if (runtime.useSupabase && api()) {
       try {
-        await api().signInOrSignUp(email, password);
+        if (mode === 'signup') await api().signUp(email, password);
+        else await api().signIn(email, password);
         const user = await api().getUser();
         if (!user) {
           showToast('请先在邮箱中确认注册，再回来登录');
           return;
         }
         await loadRemoteWorkspace({ render: false });
-        showToast('已登录');
+        showToast(mode === 'signup' ? '注册成功，已进入工作台' : '已登录');
         navigate('dashboard');
       } catch (err) {
         console.warn(err);
-        showToast('登录失败：账号不存在、密码错误或邮箱未确认');
+        showToast(mode === 'signup' ? '注册失败：邮箱可能已注册或密码不符合要求' : '登录失败：账号不存在、密码错误或邮箱未确认');
       }
       return;
     }
     const db = loadDB();
     let user = db.users.find((u) => u.email === email);
-    if (!user) {
+    if (user && mode === 'signup') {
+      showToast('邮箱已注册，请直接登录');
+      return;
+    }
+    if (!user && mode === 'signup') {
       user = { id: `user_${Date.now()}`, name: email.split('@')[0], email, password, createdAt: new Date().toISOString() };
       db.users.push(user);
       const profile = clone(db.profiles[0]);
@@ -1133,13 +1182,17 @@
       profile.published = clone(profile.draft);
       db.profiles.push(profile);
     }
+    if (!user) {
+      showToast('账号不存在，请先注册');
+      return;
+    }
     if (user.password !== password) {
       showToast('密码不正确。Demo 账号密码是 demo123');
       return;
     }
     db.currentUserId = user.id;
     saveDB(db);
-    showToast('已登录');
+    showToast(mode === 'signup' ? '注册成功，已进入工作台' : '已登录');
     navigate('dashboard');
   }
 
@@ -1315,7 +1368,9 @@
     else if (path === 'templates') html = templatesPage();
     else if (path === 'pricing') html = pricingPage();
     else if (path === 'inbox') html = inboxPage();
-    else if (path === 'login' || path === 'signup') html = loginPage();
+    else if (path === 'terms') html = termsPage();
+    else if (path === 'privacy') html = privacyPage();
+    else if (path === 'login' || path === 'signup') html = loginPage(path);
     else if (path.startsWith('u/')) html = publicPage(path.split('/')[1] || 'cj');
     else if (path.startsWith('resume/')) html = resumePrintPage(path.split('/')[1] || 'cj');
     else html = landingPage();

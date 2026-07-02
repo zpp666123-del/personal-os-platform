@@ -42,6 +42,14 @@
     return handle;
   }
 
+  function storageName(value) {
+    return String(value || 'file')
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(-80) || 'file';
+  }
+
   function usernameFromAccount(account) {
     const input = String(account || 'user').toLowerCase().trim();
     let hash = 0;
@@ -324,6 +332,41 @@
     const body = result.result || result;
     if (!body || body.code !== 0) throw new Error((body && body.message) || 'Visit tracking failed.');
     return toView(body.data);
+  };
+
+  api.uploadMedia = async function uploadMedia(file, kind) {
+    const { app } = await getCloudBase();
+    const user = await api.getUser();
+    if (!user) throw new Error('Please sign in first.');
+    const folder = kind === 'pdf' ? 'resumes' : 'media';
+    const safeUser = storageName(user.id);
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${storageName(file.name)}`;
+    const result = await app.uploadFile({
+      cloudPath: `profiles/${safeUser}/${folder}/${name}`,
+      filePath: file
+    });
+    if (result.code || result.error) throw new Error(result.message || result.error.message || 'CloudBase upload failed.');
+    const fileID = result.fileID || result.fileId || (result.data && (result.data.fileID || result.data.fileId));
+    if (!fileID) throw new Error('CloudBase upload did not return fileID.');
+    const urls = await api.getTempFileURLs([fileID]);
+    return { fileID, tempUrl: urls[fileID] || '' };
+  };
+
+  api.getTempFileURLs = async function getTempFileURLs(fileIDs) {
+    const { app } = await getCloudBase();
+    const ids = [...new Set((fileIDs || []).map(String).filter(Boolean))];
+    if (!ids.length) return {};
+    const result = await app.getTempFileURL({
+      fileList: ids.map((fileID) => ({ fileID, maxAge: 24 * 60 * 60 }))
+    });
+    if (result.code || result.error) throw new Error(result.message || result.error.message || 'CloudBase temp URL failed.');
+    const list = result.fileList || (result.data && result.data.fileList) || [];
+    return list.reduce((acc, item) => {
+      const fileID = item.fileID || item.fileId;
+      const url = item.tempFileURL || item.download_url || item.downloadUrl || item.url;
+      if (fileID && url) acc[fileID] = url;
+      return acc;
+    }, {});
   };
 
   api.loadMyLeads = async function loadMyLeads(profileId) {

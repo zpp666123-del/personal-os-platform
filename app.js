@@ -53,6 +53,8 @@
   };
 
   const assetIcons = { github: 'GH', blog: '✎', social: '◎', portfolio: '▣', email: '@', qr: '▦', website: '↗', linkedin: 'in', bilibili: 'B', notion: 'N', default: '✦' };
+  const blankImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+  const cloudMediaCache = new Map();
   const clone = (value) => JSON.parse(JSON.stringify(value));
   const esc = (value) => String(value == null ? '' : value)
     .replaceAll('&', '&amp;')
@@ -63,19 +65,30 @@
   const asTags = (value) => Array.isArray(value) ? value.map(String).filter(Boolean) : String(value || '').split(/[，,\n]/).map((x) => x.trim()).filter(Boolean);
   const tag = (value) => `<span class="tag">${esc(value)}</span>`;
   const assetIcon = (type) => assetIcons[type] || assetIcons.default;
+  const cloudFile = (value) => /^cloud:\/\//i.test(String(value || '').trim()) ? String(value || '').trim() : '';
   function mediaUrl(value, kind = 'image') {
     const url = String(value || '').trim();
     if (!url || url === '#') return '';
+    if (cloudFile(url)) return cloudMediaCache.get(url) || '';
     if (/^https?:\/\//i.test(url)) return url;
     if (kind === 'image' && /^data:image\//i.test(url)) return url;
     return '';
   }
+  function hasMedia(value, kind = 'image') {
+    return !!(mediaUrl(value, kind) || cloudFile(value));
+  }
+  function mediaImage(value, alt) {
+    const fileID = cloudFile(value);
+    const src = mediaUrl(value) || (fileID ? blankImage : '');
+    if (!src) return '';
+    return `<img src="${esc(src)}"${fileID ? ` data-cloud-file="${esc(fileID)}"` : ''} alt="${esc(alt || '')}" loading="lazy" />`;
+  }
 
   function avatarNode(p, cls = '') {
     const label = p.identity.avatar || p.identity.name.slice(0, 2);
-    const src = mediaUrl(p.identity.avatarUrl);
-    return src
-      ? `<div class="avatar has-image ${cls}"><img src="${esc(src)}" alt="${esc(p.identity.name || '头像')}" loading="lazy" /></div>`
+    const image = mediaImage(p.identity.avatarUrl, p.identity.name || '头像');
+    return image
+      ? `<div class="avatar has-image ${cls}">${image}</div>`
       : `<div class="avatar ${cls}">${esc(label)}</div>`;
   }
 
@@ -617,7 +630,7 @@
         ${inputField('主页 handle', 'identity.handle', p.identity.handle)}
         ${inputField('身份定位', 'identity.title', p.identity.title)}
         ${inputField('头像文字', 'identity.avatar', p.identity.avatar)}
-        ${inputField('头像图片 URL', 'identity.avatarUrl', p.identity.avatarUrl, { type: 'url' })}
+        ${inputField('头像图片 URL', 'identity.avatarUrl', p.identity.avatarUrl, { type: 'url', upload: 'image' })}
         ${inputField('所在城市', 'identity.city', p.identity.city)}
         ${inputField('开放状态', 'identity.status', p.identity.status)}
         ${inputField('个人域名', 'identity.website', p.identity.website)}
@@ -631,7 +644,7 @@
         ${inputField('期望角色', 'identity.expectedRole', p.identity.expectedRole)}
         ${inputField('可开始时间', 'identity.availability', p.identity.availability)}
         ${inputField('期望薪资', 'identity.expectedSalary', p.identity.expectedSalary)}
-        ${inputField('PDF 简历链接', 'identity.resumePdfUrl', p.identity.resumePdfUrl, { type: 'url' })}
+        ${inputField('PDF 简历链接', 'identity.resumePdfUrl', p.identity.resumePdfUrl, { type: 'url', upload: 'pdf' })}
       </div>
       <h3>主页文案</h3>
       <div class="form-grid">
@@ -729,7 +742,12 @@
     const control = opts.textarea
       ? `<textarea data-bind="${esc(path)}"${kind}>${esc(val)}</textarea>`
       : `<input type="${esc(type)}" data-bind="${esc(path)}" value="${esc(val)}"${kind} />`;
-    return `<label class="${cls}"><span>${esc(label)}</span>${control}</label>`;
+    return `<label class="${cls}"><span>${esc(label)}</span>${control}${opts.upload ? uploadControl(opts.upload) : ''}</label>`;
+  }
+
+  function uploadControl(kind) {
+    const accept = kind === 'pdf' ? 'application/pdf,.pdf' : 'image/*';
+    return `<span class="media-upload"><input type="file" data-media-upload data-upload-kind="${esc(kind)}" accept="${accept}" /><small>CloudBase 登录后可上传；本地 Demo 可粘贴 URL。</small></span>`;
   }
 
   function listEditor(path, list = [], fields = []) {
@@ -758,7 +776,8 @@
     const base = `data-list-field data-list="${esc(path)}" data-index="${index}" data-field="${esc(key)}"${kindAttr}`;
     if (kind === 'textarea') return `<label class="field full"><span>${esc(label)}</span><textarea ${base}>${esc(val)}</textarea></label>`;
     const type = kind === 'number' ? 'number' : kind === 'url' ? 'url' : 'text';
-    return `<label class="field"><span>${esc(label)}</span><input type="${type}" ${base} value="${esc(val)}" /></label>`;
+    const upload = kind === 'url' && key === 'coverUrl' ? uploadControl('image') : '';
+    return `<label class="field"><span>${esc(label)}</span><input type="${type}" ${base} value="${esc(val)}" />${upload}</label>`;
   }
 
   function studioPreview(p, row) {
@@ -903,7 +922,7 @@
             <div class="resume-title-card tilt-card motion-card">
               <div><p class="section-kicker">Resume</p><h2>简历<br>摘要</h2></div>
               <p>首页只展示摘要和关键判断信息，完整学历、专业、工作与项目经历放入简历抽屉，避免页面被传统表格破坏。</p>
-              <div class="resume-actions"><button class="btn primary magnetic" type="button" data-action="open-resume">查看完整简历</button><a class="btn ghost magnetic" href="#/resume/${esc(row.handle)}">网页版简历</a>${mediaUrl(p.identity.resumePdfUrl, 'file') && canShow(p,'resumePdf','public') ? `<a class="btn ghost magnetic" href="${esc(mediaUrl(p.identity.resumePdfUrl, 'file'))}" target="_blank" rel="noopener">下载 PDF</a>` : ''}</div>
+              <div class="resume-actions"><button class="btn primary magnetic" type="button" data-action="open-resume">查看完整简历</button><a class="btn ghost magnetic" href="#/resume/${esc(row.handle)}">网页版简历</a>${hasMedia(p.identity.resumePdfUrl, 'file') && canShow(p,'resumePdf','public') ? `<a class="btn ghost magnetic" href="${esc(mediaUrl(p.identity.resumePdfUrl, 'file') || '#')}"${cloudFile(p.identity.resumePdfUrl) ? ` data-cloud-file="${esc(cloudFile(p.identity.resumePdfUrl))}" data-cloud-target="href"` : ''} target="_blank" rel="noopener">下载 PDF</a>` : ''}</div>
             </div>
             <div>
               <div class="resume-detail-grid">
@@ -915,7 +934,7 @@
               <div class="resume-strip">
                 <article class="resume-block"><h3>技能栈</h3><p>${esc(p.resume.stack.join(' · '))}</p></article>
                 <article class="resume-block"><h3>隐私控制</h3><p>${esc(p.contact.privacyNote)}</p></article>
-                <article class="resume-block"><h3>PDF</h3><p>${canShow(p,'resumePdf','public') ? (mediaUrl(p.identity.resumePdfUrl, 'file') ? '已配置 PDF 简历链接。' : '支持替换为真实 PDF 链接。') : 'PDF 可设置为联系后可见。'}</p></article>
+                <article class="resume-block"><h3>PDF</h3><p>${canShow(p,'resumePdf','public') ? (hasMedia(p.identity.resumePdfUrl, 'file') ? '已配置 PDF 简历链接。' : '支持替换为真实 PDF 链接。') : 'PDF 可设置为联系后可见。'}</p></article>
               </div>
             </div>
           </div>
@@ -955,13 +974,13 @@
   }
 
   function projectCard(x, i) {
-    const cover = mediaUrl(x.coverUrl);
-    return `<article class="project-card tilt-card motion-card"><div class="project-cover ${cover ? 'has-image' : ''}">${cover ? `<img src="${esc(cover)}" alt="${esc(x.title)}" loading="lazy" />` : ''}<span>0${i+1} · ${esc(x.title)}</span></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div>${(x.tags||[]).map(tag).join('')}</div><a class="btn tiny ghost magnetic" href="${esc(x.url || '#')}">查看详情</a></article>`;
+    const image = mediaImage(x.coverUrl, x.title);
+    return `<article class="project-card tilt-card motion-card"><div class="project-cover ${image ? 'has-image' : ''}">${image}<span>0${i+1} · ${esc(x.title)}</span></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div>${(x.tags||[]).map(tag).join('')}</div><a class="btn tiny ghost magnetic" href="${esc(x.url || '#')}">查看详情</a></article>`;
   }
 
   function postCard(x) {
-    const cover = mediaUrl(x.coverUrl);
-    return `<a class="post-card tilt-card motion-card" href="${esc(x.url || '#')}"><span class="post-thumb ${cover ? 'has-image' : ''}">${cover ? `<img src="${esc(cover)}" alt="" loading="lazy" />` : ''}</span><div><h3>${esc(x.title)}</h3><p>${esc(x.meta)}</p></div><span class="pill">${esc(x.views)}</span></a>`;
+    const image = mediaImage(x.coverUrl, '');
+    return `<a class="post-card tilt-card motion-card" href="${esc(x.url || '#')}"><span class="post-thumb ${image ? 'has-image' : ''}">${image}</span><div><h3>${esc(x.title)}</h3><p>${esc(x.meta)}</p></div><span class="pill">${esc(x.views)}</span></a>`;
   }
 
   function resumeDrawer(p, row) {
@@ -1165,11 +1184,71 @@
     refreshPreview();
   }
 
+  async function uploadStudioMedia(input) {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    const kind = input.dataset.uploadKind || 'image';
+    const isPdf = kind === 'pdf';
+    const okType = isPdf ? (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) : /^image\//.test(file.type);
+    const maxSize = (isPdf ? 10 : 5) * 1024 * 1024;
+    if (!okType) {
+      showToast(isPdf ? '请上传 PDF 文件' : '请上传图片文件');
+      return;
+    }
+    if (file.size > maxSize) {
+      showToast(isPdf ? 'PDF 不要超过 10MB' : '图片不要超过 5MB');
+      return;
+    }
+    if (!runtime.useCloudBase || !api()) {
+      showToast('请先登录 CloudBase 后再上传文件');
+      return;
+    }
+    const target = input.closest('.field')?.querySelector('[data-bind], [data-list-field]');
+    if (!target) return;
+    input.disabled = true;
+    showToast('正在上传文件...');
+    try {
+      const uploaded = await api().uploadMedia(file, kind);
+      if (uploaded.tempUrl) cloudMediaCache.set(uploaded.fileID, uploaded.tempUrl);
+      target.value = uploaded.fileID;
+      updateInput(target);
+      resolveCloudMedia();
+      showToast('已上传并保存到草稿');
+    } catch (err) {
+      console.warn(err);
+      showToast('上传失败，请检查云存储和安全域名');
+    } finally {
+      input.disabled = false;
+    }
+  }
+
+  async function resolveCloudMedia() {
+    const service = api();
+    if (!runtime.useCloudBase || !service || !service.getTempFileURLs) return;
+    const nodes = [...root.querySelectorAll('[data-cloud-file]')];
+    const missing = nodes
+      .map((node) => node.dataset.cloudFile)
+      .filter((fileID) => fileID && !cloudMediaCache.has(fileID));
+    try {
+      Object.entries(await service.getTempFileURLs(missing)).forEach(([fileID, url]) => cloudMediaCache.set(fileID, url));
+      nodes.forEach((node) => {
+        const url = cloudMediaCache.get(node.dataset.cloudFile);
+        if (!url) return;
+        if (node.dataset.cloudTarget === 'href') node.href = url;
+        else node.src = url;
+      });
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+
   function refreshPreview() {
     const el = document.querySelector('[data-studio-preview]');
     if (!el) return;
     const row = currentProfile(loadDB());
     el.innerHTML = studioPreview(ensure(row), row);
+    resolveCloudMedia();
   }
 
   function addList(path) {
@@ -1581,6 +1660,7 @@
     root.innerHTML = html;
     closeCommand();
     initMotion();
+    resolveCloudMedia();
     if (scroll) window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
@@ -1629,6 +1709,11 @@
         item.hidden = q && !item.textContent.toLowerCase().includes(q);
       });
     }
+  });
+
+  document.addEventListener('change', (event) => {
+    const input = event.target;
+    if (input.matches('[data-media-upload]')) uploadStudioMedia(input);
   });
 
   document.addEventListener('submit', (event) => {

@@ -11,6 +11,13 @@ leads
 profile_views
 ```
 
+同时开通云存储，用来保存头像、项目/作品封面和 PDF 简历。浏览器端上传前，需要在 CloudBase 控制台把当前访问域名加入 Web 安全域名，例如：
+
+```txt
+zpp666123-del.github.io
+localhost:5173
+```
+
 ## 权限
 
 用最少规则先跑通 MVP：

@@ -143,6 +143,16 @@
     };
   }
 
+  function toView(row) {
+    return {
+      id: row._id || row.id,
+      profileId: row.profileId,
+      profileHandle: row.profileHandle,
+      source: row.source || 'public_profile',
+      createdAt: row.createdAt
+    };
+  }
+
   async function first(collection, where) {
     const { db } = await getCloudBase();
     const result = await db.collection(collection).where(where).limit(1).get();
@@ -304,6 +314,17 @@
     return toLead(body.data);
   };
 
+  api.trackVisit = async function trackVisit(handle, source) {
+    const { app } = await getCloudBase();
+    const result = await app.callFunction({
+      name: 'trackVisit',
+      data: { handle: slugifyHandle(handle), source: source || 'public_profile' }
+    });
+    const body = result.result || result;
+    if (!body || body.code !== 0) throw new Error((body && body.message) || 'Visit tracking failed.');
+    return toView(body.data);
+  };
+
   api.loadMyLeads = async function loadMyLeads(profileId) {
     const { db } = await getCloudBase();
     const user = await api.getUser();
@@ -313,6 +334,18 @@
       .orderBy('createdAt', 'desc')
       .get();
     return (result.data || []).map(toLead);
+  };
+
+  api.loadMyViews = async function loadMyViews(profileId) {
+    const { db } = await getCloudBase();
+    const user = await api.getUser();
+    if (!user) return [];
+    const result = await db.collection('profile_views')
+      .where({ ownerId: user.id, profileId })
+      .orderBy('createdAt', 'desc')
+      .limit(200)
+      .get();
+    return (result.data || []).map(toView);
   };
 
   api.updateLeadStatus = async function updateLeadStatus(leadId, status) {

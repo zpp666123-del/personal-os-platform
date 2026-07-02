@@ -8,6 +8,7 @@
 profiles
 published_profiles
 leads
+profile_views
 ```
 
 ## 权限
@@ -38,9 +39,18 @@ leads:
   "update": "doc.ownerId == auth.uid",
   "delete": false
 }
+
+profile_views:
+{
+  "read": "doc.ownerId == auth.uid",
+  "create": false,
+  "update": false,
+  "delete": false
+}
 ```
 
 线索由 `submitLead` 云函数写入，前端访客不能直接写 `leads`；主页拥有者可以更新自己的线索状态。
+访问记录由 `trackVisit` 云函数写入，前端访客不能直接写 `profile_views`。
 
 ## 登录
 
@@ -77,6 +87,9 @@ npx tcb fn deploy submitLead --force
 ```json
 {
   "submitLead": {
+    "invoke": true
+  },
+  "trackVisit": {
     "invoke": true
   },
   "*": {

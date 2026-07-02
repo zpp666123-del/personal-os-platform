@@ -11,6 +11,7 @@
   let saveSeq = 0;
   let saveAbort = null;
   let publishing = false;
+  const visitMemory = new Set();
   const runtime = {
     db: null,
     useCloudBase: false,
@@ -178,6 +179,12 @@
       console.warn(err);
       db.leads = [];
     }
+    try {
+      db.views = await service.loadMyViews(row.id);
+    } catch (err) {
+      console.warn(err);
+      db.views = [];
+    }
     saveDB(db, { localOnly: true });
     if (options.render !== false) render(false);
     return row;
@@ -192,6 +199,41 @@
     saveDB(loadDB(), { localOnly: true });
     if (options.render !== false) render(false);
     return row;
+  }
+
+  function trackLocalVisit(row, source) {
+    const db = loadDB();
+    db.views = db.views || [];
+    db.views.push({
+      id: `view_${Date.now()}`,
+      profileId: row.id,
+      profileHandle: row.handle,
+      source,
+      createdAt: new Date().toISOString()
+    });
+    saveDB(db, { localOnly: runtime.useCloudBase });
+  }
+
+  async function trackVisit(row, source = 'public_profile') {
+    if (!row || !row.handle) return;
+    const key = `visit:${row.handle}:${source}`;
+    if (visitMemory.has(key)) return;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch (err) {
+      console.warn(err);
+    }
+    visitMemory.add(key);
+    if (runtime.useCloudBase && api()) {
+      try {
+        await api().trackVisit(row.handle, source);
+      } catch (err) {
+        console.warn(err);
+      }
+      return;
+    }
+    trackLocalVisit(row, source);
   }
 
   async function hydrateFromCloudBase() {
@@ -486,6 +528,7 @@
     const p = ensure(row);
     const progress = Math.min(100, Math.round((p.progress.current / p.progress.total) * 100));
     const leadsCount = db.leads.filter((l) => l.profileId === row.id).length;
+    const viewsCount = (db.views || []).filter((v) => v.profileId === row.id).length;
     const health = Math.min(100, 44 + p.projects.length * 6 + p.assets.length * 3 + (p.resume.summary ? 8 : 0) + (p.contact.note ? 6 : 0));
     const tasks = [
       ['完善个人身份', !!p.identity.title, '#/studio/identity'],
@@ -509,12 +552,13 @@
             <h2>${health}%</h2>
             <p class="muted">完成度越高，公开页越像一个可信产品资产。</p>
             <div class="health-bar"><span style="width:${health}%"></span></div>
-            <div class="mini-kpis"><span>项目 ${p.projects.length}</span><span>资产 ${p.assets.length}</span><span>线索 ${leadsCount}</span></div>
+            <div class="mini-kpis"><span>项目 ${p.projects.length}</span><span>访问 ${viewsCount}</span><span>线索 ${leadsCount}</span></div>
           </aside>
         </section>
         <section class="dashboard-grid product-dashboard-grid" data-reveal>
           <article class="dash-card tilt-card motion-card link-card"><span class="pill">Share Links</span><div><strong>${esc(row.handle)}</strong><p>公开主页：${esc(publicUrl(row))}</p><p>网页版简历：${esc(resumeUrl(row))}</p></div><div class="inline-actions"><button class="btn tiny" data-action="copy-public-url">复制主页</button><button class="btn tiny" data-action="copy-resume-url">复制简历</button></div></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Build Log</span><div><strong>${esc(p.progress.current)} / ${esc(p.progress.total)}</strong><p>${esc(p.progress.label)}公开记录</p></div><a class="btn tiny" href="#/studio/hero">编辑记录</a></article>
+          <article class="dash-card tilt-card motion-card"><span class="pill">Views</span><div><strong>${viewsCount}</strong><p>公开页访问记录</p></div><a class="btn tiny" href="#/u/${esc(row.handle)}">查看公开页</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Leads</span><div><strong>${leadsCount}</strong><p>访客联系线索</p></div><a class="btn tiny" href="#/inbox">查看收件箱</a></article>
         </section>
         <section class="section tight dashboard-operate" data-reveal>
@@ -791,6 +835,7 @@
 
   function publicPage(handle) {
     const row = profileByHandle(handle);
+    trackVisit(row, 'public_profile');
     const p = row.published || row.draft;
     const record = (p.progress.records || [])[recordIndex % Math.max((p.progress.records || []).length, 1)] || {};
     const progress = Math.min(100, Math.round((p.progress.current / p.progress.total) * 100));

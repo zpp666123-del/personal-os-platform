@@ -155,6 +155,10 @@
     ],
     leads: [
       { id: 'lead_001', profileId: 'profile_cj', name: '示例访客', email: 'partner@example.com', intent: '项目合作', message: '我想了解是否可以基于这套主页模板为我们社群成员批量生成个人能力页。', status: 'new', createdAt: '2026-06-29T09:30:00.000Z' }
+    ],
+    views: [
+      { id: 'view_001', profileId: 'profile_cj', profileHandle: 'cj', source: 'public_profile', createdAt: '2026-06-29T08:20:00.000Z' },
+      { id: 'view_002', profileId: 'profile_cj', profileHandle: 'cj', source: 'resume', createdAt: '2026-06-29T08:35:00.000Z' }
     ]
   };
 

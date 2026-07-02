@@ -1,10 +1,10 @@
 {
   "scripts": {
     "serve": "python -m http.server 5173",
-    "check": "node --check app.js && node --check cloudbase-api.js && node --check cloudbase-client.js && node --check data.js && node --check cloudfunctions/submitLead/index.js && node --check scripts/build-cloudbase.js && node --check scripts/check-csv-export.js && node --check js/product-sections.js && node scripts/check-csv-export.js && npm run build:cloudbase",
+    "check": "node --check app.js && node --check cloudbase-api.js && node --check cloudbase-client.js && node --check data.js && node --check cloudfunctions/submitLead/index.js && node --check cloudfunctions/trackVisit/index.js && node --check scripts/build-cloudbase.js && node --check scripts/check-csv-export.js && node --check js/product-sections.js && node scripts/check-csv-export.js && npm run build:cloudbase",
     "build:cloudbase": "node scripts/build-cloudbase.js",
     "deploy:hosting": "npm run build:cloudbase && tcb hosting deploy .cloudbase-dist",
-    "deploy:function": "tcb fn deploy submitLead --force"
+    "deploy:function": "tcb fn deploy submitLead --force && tcb fn deploy trackVisit --force"
   },
   "name": "personal-os-platform-v8-productized",
   "version": "8.2.0-cloudbase",

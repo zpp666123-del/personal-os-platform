@@ -362,6 +362,21 @@
     return `${prettyBaseUrl()}/resume/${row.handle}`;
   }
 
+  function safeColor(value) {
+    const color = String(value || '').trim();
+    return /^#[0-9a-f]{6}$/i.test(color) ? color : '';
+  }
+
+  function profileAccent(profile, row) {
+    const db = loadDB();
+    const template = db.templates.find((item) => item.id === row.templateId);
+    return safeColor(profile.theme && profile.theme.accent) || safeColor(template && template.accent) || '#315eff';
+  }
+
+  function themeStyle(profile, row) {
+    return ` style="--blue:${profileAccent(profile, row)}"`;
+  }
+
   function appHeader(row, active) {
     return `
       <header class="top-nav mature-nav app-nav">
@@ -826,12 +841,18 @@
   function templatesPage() {
     const db = loadDB();
     const row = currentProfile(db);
+    const p = ensure(row);
+    const accent = profileAccent(p, row);
     return shell(`
       <main class="page">
         <section class="simple-hero mature-simple-hero" data-reveal>
           <p class="eyebrow">Template System</p>
           <h1>模板不是换皮，而是不同场景的表达策略。</h1>
           <p>一套资料数据可以渲染成求职主页、合作主页或创作者主页。成熟产品应该让用户选择目标，而不是只选择颜色。</p>
+        </section>
+        <section class="theme-panel tilt-card motion-card" data-reveal>
+          <div><p class="section-kicker">Theme Accent</p><h2>主题色</h2></div>
+          <label class="field theme-picker"><span>公开页强调色</span><input type="color" data-bind="theme.accent" data-kind="color" value="${esc(accent)}" /></label>
         </section>
         <section class="template-grid" data-reveal>${db.templates.map((t) => templateCard(t, row.templateId)).join('')}</section>
         <section class="section tight" data-reveal>
@@ -886,7 +907,7 @@
     const record = (p.progress.records || [])[recordIndex % Math.max((p.progress.records || []).length, 1)] || {};
     const progress = Math.min(100, Math.round((p.progress.current / p.progress.total) * 100));
     return shell(`
-      <main class="public-page template-${esc(row.templateId)}">
+      <main class="public-page template-${esc(row.templateId)}"${themeStyle(p, row)}>
         <section class="public-hero" data-reveal>
           <div class="public-copy">
             <p class="eyebrow">${esc(p.hero.badge)}</p>
@@ -1041,7 +1062,7 @@
     const row = profileByHandle(handle);
     const p = row.published || row.draft;
     return shell(`
-      <main class="resume-print-page">
+      <main class="resume-print-page"${themeStyle(p, row)}>
         <div class="print-actions actions"><button class="btn primary magnetic" type="button" data-action="print">打印 / 保存 PDF</button><a class="btn ghost magnetic" href="#/u/${esc(row.handle)}">返回公开页</a></div>
         <article class="print-sheet">
           <header class="print-head"><div><h1>${esc(p.identity.name)}</h1><p>${esc(p.identity.title)}</p></div><div><p>${esc(p.identity.city)}<br>${esc(p.identity.email)}<br>${esc(p.identity.website)}</p></div></header>
@@ -1190,6 +1211,7 @@
     const kind = input.dataset.kind;
     if (kind === 'number') return Number(input.value || 0);
     if (kind === 'tags') return asTags(input.value);
+    if (kind === 'color') return safeColor(input.value) || '#315eff';
     return input.value;
   }
 

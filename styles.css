@@ -518,6 +518,9 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .template-line.short { width: 60%; }
 .template-card h3 { font-size: 30px; letter-spacing: -.06em; margin: 18px 0 8px; }
 .template-card p { color: var(--muted); line-height: 1.75; }
+.theme-panel { padding: 24px; display: grid; grid-template-columns: minmax(0,1fr) 240px; gap: 18px; align-items: end; margin-bottom: 18px; }
+.theme-panel h2 { margin: 0; font-size: 34px; letter-spacing: -.06em; }
+.theme-picker input[type="color"] { padding: 5px; cursor: pointer; }
 .lead-list { display: grid; gap: 14px; }
 .lead-card { padding: 22px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
 .lead-card span { color: var(--blue); font-weight: 950; font-size: 12px; }

@@ -535,6 +535,32 @@
     `, { mode: 'marketing' });
   }
 
+  function dayKey(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  function viewTrend(db, profileId) {
+    const today = new Date();
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - 6 + index);
+      return { key: dayKey(date), label: `${date.getMonth() + 1}/${date.getDate()}`, count: 0 };
+    });
+    const byDay = new Map(days.map((day) => [day.key, day]));
+    (db.views || []).forEach((view) => {
+      const day = view.profileId === profileId && byDay.get(dayKey(view.createdAt));
+      if (day) day.count += 1;
+    });
+    const max = Math.max(1, ...days.map((day) => day.count));
+    return days.map((day) => ({ ...day, height: Math.max(6, Math.round((day.count / max) * 100)) }));
+  }
+
+  function trendBars(days) {
+    return `<div class="view-trend">${days.map((day) => `<div class="trend-day"><span style="height:${day.height}%"></span><b>${day.count}</b><small>${esc(day.label)}</small></div>`).join('')}</div>`;
+  }
+
   function dashboardPage() {
     const db = loadDB();
     const row = currentProfile(db);
@@ -542,6 +568,7 @@
     const progress = Math.min(100, Math.round((p.progress.current / p.progress.total) * 100));
     const leadsCount = db.leads.filter((l) => l.profileId === row.id).length;
     const viewsCount = (db.views || []).filter((v) => v.profileId === row.id).length;
+    const trend = viewTrend(db, row.id);
     const health = Math.min(100, 44 + p.projects.length * 6 + p.assets.length * 3 + (p.resume.summary ? 8 : 0) + (p.contact.note ? 6 : 0));
     const tasks = [
       ['完善个人身份', !!p.identity.title, '#/studio/identity'],
@@ -571,7 +598,7 @@
         <section class="dashboard-grid product-dashboard-grid" data-reveal>
           <article class="dash-card tilt-card motion-card link-card"><span class="pill">Share Links</span><div><strong>${esc(row.handle)}</strong><p>公开主页：${esc(publicUrl(row))}</p><p>网页版简历：${esc(resumeUrl(row))}</p></div><div class="inline-actions"><button class="btn tiny" data-action="copy-public-url">复制主页</button><button class="btn tiny" data-action="copy-resume-url">复制简历</button></div></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Build Log</span><div><strong>${esc(p.progress.current)} / ${esc(p.progress.total)}</strong><p>${esc(p.progress.label)}公开记录</p></div><a class="btn tiny" href="#/studio/hero">编辑记录</a></article>
-          <article class="dash-card tilt-card motion-card"><span class="pill">Views</span><div><strong>${viewsCount}</strong><p>公开页访问记录</p></div><a class="btn tiny" href="#/u/${esc(row.handle)}">查看公开页</a></article>
+          <article class="dash-card tilt-card motion-card"><span class="pill">Views</span><div><strong>${viewsCount}</strong><p>近 7 天公开页访问趋势</p>${trendBars(trend)}</div><a class="btn tiny" href="#/u/${esc(row.handle)}">查看公开页</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Leads</span><div><strong>${leadsCount}</strong><p>访客联系线索</p></div><a class="btn tiny" href="#/inbox">查看收件箱</a></article>
         </section>
         <section class="section tight dashboard-operate" data-reveal>

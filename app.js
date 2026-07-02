@@ -1132,6 +1132,21 @@
     return { new: '新线索', contacted: '已联系', archived: '已归档' }[status] || '新线索';
   }
 
+  function leadReplyUrl(lead) {
+    const email = String(lead.email || '').trim();
+    if (!email) return '';
+    const subject = `回复：${lead.intent || '主页联系'}`;
+    const body = [
+      `${lead.name || '你好'}，你好：`,
+      '',
+      '我看到了你在我的个人主页提交的消息，想继续沟通一下。',
+      '',
+      '--- 原始消息 ---',
+      lead.message || ''
+    ].join('\n');
+    return `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
   function inboxPage() {
     const db = loadDB();
     const leads = currentLeads(db);
@@ -1147,6 +1162,7 @@
                 <h3>${esc(l.name)}</h3>
                 <p>${esc(l.email)}<br>${new Date(l.createdAt).toLocaleString()}</p>
                 <div class="lead-actions">
+                  <a class="btn tiny" href="${esc(leadReplyUrl(l))}">回复邮件</a>
                   <button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="new" ${(l.status || 'new') === 'new' ? 'disabled' : ''}>新线索</button>
                   <button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="contacted" ${l.status === 'contacted' ? 'disabled' : ''}>已联系</button>
                   <button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="archived" ${l.status === 'archived' ? 'disabled' : ''}>归档</button>

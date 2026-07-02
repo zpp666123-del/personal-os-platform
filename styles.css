@@ -455,6 +455,34 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .contact-form { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .contact-form .full { grid-column: 1 / -1; }
 
+.public-page.template-build-story { --blue: #111111; --violet: #17b26a; }
+.public-page.template-build-story .public-hero { grid-template-columns: minmax(390px,.72fr) minmax(0,1fr); }
+.public-page.template-build-story .public-copy { order: 2; }
+.public-page.template-build-story .public-orbit { order: 1; background: linear-gradient(145deg, #111, #252525); color: #fff; }
+.public-page.template-build-story .profile-card,
+.public-page.template-build-story .resume-module { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+.public-page.template-build-story .profile-card p,
+.public-page.template-build-story .resume-block p,
+.public-page.template-build-story .resume-block li { color: #d6d6d6; }
+
+.public-page.template-craft-dark { --blue: #8b5cf6; --violet: #15b8ff; color: #f8fafc; }
+.public-page.template-craft-dark .public-orbit,
+.public-page.template-craft-dark .resume-module,
+.public-page.template-craft-dark .contact-card,
+.public-page.template-craft-dark .project-card,
+.public-page.template-craft-dark .post-card,
+.public-page.template-craft-dark .asset-card { background: #11131a; border-color: rgba(255,255,255,.14); }
+.public-page.template-craft-dark .profile-card,
+.public-page.template-craft-dark .resume-block { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); }
+.public-page.template-craft-dark .lede,
+.public-page.template-craft-dark .profile-card p,
+.public-page.template-craft-dark .project-card p,
+.public-page.template-craft-dark .post-card p,
+.public-page.template-craft-dark .asset-card span,
+.public-page.template-craft-dark .contact-card p,
+.public-page.template-craft-dark .resume-block p,
+.public-page.template-craft-dark .resume-block li { color: #cbd5e1; }
+
 .resume-drawer { position: fixed; inset: 0; z-index: 1400; pointer-events: none; opacity: 0; transition: opacity .26s var(--ease); }
 .resume-drawer.open { pointer-events: auto; opacity: 1; }
 .drawer-backdrop { position: absolute; inset: 0; background: rgba(10,10,14,.42); backdrop-filter: blur(10px); }

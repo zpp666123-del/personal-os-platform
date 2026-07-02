@@ -330,6 +330,8 @@ h1, h2, h3, p { text-wrap: balance; }
 .dash-card h3 { font-size: 26px; line-height: 1; letter-spacing: -.06em; margin: 0 0 12px; }
 .dash-card p { color: var(--muted); line-height: 1.75; }
 .dash-card strong { font-size: 48px; letter-spacing: -.08em; }
+.domain-card strong { font-size: 28px; letter-spacing: 0; }
+.domain-card p { word-break: break-word; }
 .view-trend { height: 92px; display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 8px; align-items: end; margin-top: 14px; }
 .trend-day { height: 100%; display: grid; grid-template-rows: 1fr auto auto; gap: 4px; text-align: center; color: var(--muted); font-size: 11px; }
 .trend-day span { align-self: end; min-height: 6px; border-radius: 999px 999px 4px 4px; background: linear-gradient(180deg, var(--blue), var(--violet)); }

@@ -600,6 +600,25 @@
     return `<div class="source-list">${rows.length ? rows.map((row) => `<div class="source-row"><span>${esc(row.label)}</span><i><b style="width:${row.width}%"></b></i><small>${row.count}</small></div>`).join('') : '<p class="muted">暂无来源数据</p>'}</div>`;
   }
 
+  function customDomainInfo(p) {
+    const raw = String(p.identity.website || '').trim();
+    let host = '';
+    if (raw && raw !== '#') {
+      try {
+        host = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).host;
+      } catch (error) {
+        host = raw.replace(/^https?:\/\//i, '').split('/')[0];
+      }
+    }
+    const demo = !host || ['yourname.site', 'your-domain.example'].includes(host.toLowerCase());
+    return {
+      host,
+      ready: !demo,
+      label: demo ? '未设置' : '已填写',
+      detail: demo ? '在个人身份里填写真实域名；绑定前继续使用公开链接分享。' : '在托管平台绑定域名后，按平台提示配置 DNS。'
+    };
+  }
+
   function dashboardPage() {
     const db = loadDB();
     const row = currentProfile(db);
@@ -611,6 +630,7 @@
     const trend = viewTrend(db, row.id);
     const conversion = viewsCount ? Math.round((leadsCount / viewsCount) * 100) : 0;
     const sources = sourceStats(db, row.id);
+    const domain = customDomainInfo(p);
     const health = Math.min(100, 44 + p.projects.length * 6 + p.assets.length * 3 + (p.resume.summary ? 8 : 0) + (p.contact.note ? 6 : 0));
     const tasks = [
       ['完善个人身份', !!p.identity.title, '#/studio/identity'],
@@ -640,6 +660,7 @@
         <section class="dashboard-grid product-dashboard-grid" data-reveal>
           <article class="dash-card tilt-card motion-card link-card"><span class="pill">Share Links</span><div><strong>${esc(row.handle)}</strong><p>公开主页：${esc(publicUrl(row))}</p><p>网页版简历：${esc(resumeUrl(row))}</p></div><div class="inline-actions"><button class="btn tiny" data-action="copy-public-url">复制主页</button><button class="btn tiny" data-action="copy-resume-url">复制简历</button></div></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Build Log</span><div><strong>${esc(p.progress.current)} / ${esc(p.progress.total)}</strong><p>${esc(p.progress.label)}公开记录</p></div><a class="btn tiny" href="#/studio/hero">编辑记录</a></article>
+          <article class="dash-card tilt-card motion-card domain-card"><span class="pill">Domain</span><div><strong>${esc(domain.label)}</strong><p>${domain.ready ? esc(domain.host) : '还没有真实自定义域名'}</p><p>${esc(domain.detail)}</p></div><a class="btn tiny" href="#/studio/identity">${domain.ready ? '编辑域名' : '设置域名'}</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Views</span><div><strong>${viewsCount}</strong><p>近 7 天公开页访问趋势</p>${trendBars(trend)}</div><a class="btn tiny" href="#/u/${esc(row.handle)}">查看公开页</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Leads</span><div><strong>${leadsCount}</strong><p>${unreadLeads ? `${unreadLeads} 条新线索待处理` : '访客联系线索'}</p></div><a class="btn tiny" href="#/inbox">查看收件箱</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Conversion</span><div><strong>${conversion}%</strong><p>${leadsCount} 条线索 / ${viewsCount} 次访问</p>${sourceRows(sources)}</div><a class="btn tiny" href="#/inbox">处理线索</a></article>

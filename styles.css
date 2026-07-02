@@ -100,6 +100,8 @@ img { max-width: 100%; display: block; }
 .nav-pill { flex: 1; justify-content: center; gap: 5px; padding: 5px; }
 .nav-pill a { padding: 12px 17px; border-radius: 999px; color: #50525a; font-size: 14px; font-weight: 880; white-space: nowrap; transition: background .22s var(--ease), color .22s var(--ease), transform .22s var(--ease); }
 .nav-pill a:hover, .nav-pill a.active { background: #111115; color: #fff; transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,.14); }
+.nav-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-style: normal; line-height: 1; }
+.alert-pill { background: rgba(49,94,255,.10); color: var(--blue); border-color: rgba(49,94,255,.18); }
 .nav-actions { gap: 8px; padding: 6px; }
 .icon-btn, .top-cta { border: 0; border-radius: 999px; height: 42px; font-weight: 950; }
 .icon-btn { width: 42px; display: grid; place-items: center; background: #111; color: #fff; }

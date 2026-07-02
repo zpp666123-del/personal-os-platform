@@ -127,6 +127,10 @@
     return db.profiles.find((p) => p.ownerId === user.id) || db.profiles[0];
   }
 
+  function newLeadCount(db = loadDB(), profileId = currentProfile(db).id) {
+    return (db.leads || []).filter((lead) => lead.profileId === profileId && (lead.status || 'new') === 'new').length;
+  }
+
   function profileByHandle(handle, db = loadDB()) {
     return db.profiles.find((p) => p.handle === handle) || db.profiles[0];
   }
@@ -378,6 +382,7 @@
   }
 
   function appHeader(row, active) {
+    const unread = newLeadCount(loadDB(), row.id);
     return `
       <header class="top-nav mature-nav app-nav">
         <a class="brand-pill magnetic" href="#/home" aria-label="回到首页">
@@ -389,7 +394,7 @@
           <a class="${active('dashboard')}" href="#/dashboard">工作台</a>
           <a class="${active('studio')}" href="#/studio/identity">编辑器</a>
           <a class="${active('templates')}" href="#/templates">模板</a>
-          <a class="${active('inbox')}" href="#/inbox">线索</a>
+          <a class="${active('inbox')}" href="#/inbox">线索${unread ? `<i class="nav-badge">${unread}</i>` : ''}</a>
           <a class="${active('pricing')}" href="#/pricing">定价</a>
         </nav>
         <div class="nav-actions">
@@ -582,6 +587,7 @@
     const p = ensure(row);
     const progress = Math.min(100, Math.round((p.progress.current / p.progress.total) * 100));
     const leadsCount = db.leads.filter((l) => l.profileId === row.id).length;
+    const unreadLeads = newLeadCount(db, row.id);
     const viewsCount = (db.views || []).filter((v) => v.profileId === row.id).length;
     const trend = viewTrend(db, row.id);
     const health = Math.min(100, 44 + p.projects.length * 6 + p.assets.length * 3 + (p.resume.summary ? 8 : 0) + (p.contact.note ? 6 : 0));
@@ -614,7 +620,7 @@
           <article class="dash-card tilt-card motion-card link-card"><span class="pill">Share Links</span><div><strong>${esc(row.handle)}</strong><p>公开主页：${esc(publicUrl(row))}</p><p>网页版简历：${esc(resumeUrl(row))}</p></div><div class="inline-actions"><button class="btn tiny" data-action="copy-public-url">复制主页</button><button class="btn tiny" data-action="copy-resume-url">复制简历</button></div></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Build Log</span><div><strong>${esc(p.progress.current)} / ${esc(p.progress.total)}</strong><p>${esc(p.progress.label)}公开记录</p></div><a class="btn tiny" href="#/studio/hero">编辑记录</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Views</span><div><strong>${viewsCount}</strong><p>近 7 天公开页访问趋势</p>${trendBars(trend)}</div><a class="btn tiny" href="#/u/${esc(row.handle)}">查看公开页</a></article>
-          <article class="dash-card tilt-card motion-card"><span class="pill">Leads</span><div><strong>${leadsCount}</strong><p>访客联系线索</p></div><a class="btn tiny" href="#/inbox">查看收件箱</a></article>
+          <article class="dash-card tilt-card motion-card"><span class="pill">Leads</span><div><strong>${leadsCount}</strong><p>${unreadLeads ? `${unreadLeads} 条新线索待处理` : '访客联系线索'}</p></div><a class="btn tiny" href="#/inbox">查看收件箱</a></article>
         </section>
         <section class="section tight dashboard-operate" data-reveal>
           <article class="onboarding-panel tilt-card motion-card">
@@ -1086,9 +1092,10 @@
   function inboxPage() {
     const db = loadDB();
     const leads = currentLeads(db);
+    const unread = newLeadCount(db);
     return shell(`
       <main class="page">
-        <section class="simple-hero" data-reveal><p class="eyebrow">Inbox</p><h1>联系线索收件箱。</h1><p>访客提交的面试、合作、请求联系方式都会进入这里。</p><div class="actions"><button class="btn ghost magnetic" type="button" data-action="export-leads" ${leads.length ? '' : 'disabled'}>导出 CSV</button></div></section>
+        <section class="simple-hero" data-reveal><p class="eyebrow">Inbox</p><h1>联系线索收件箱。</h1><p>访客提交的面试、合作、请求联系方式都会进入这里。</p><div class="actions">${unread ? `<span class="pill alert-pill">${unread} 条新线索</span>` : ''}<button class="btn ghost magnetic" type="button" data-action="export-leads" ${leads.length ? '' : 'disabled'}>导出 CSV</button></div></section>
         <section class="lead-list" data-reveal>
           ${leads.length ? leads.map((l) => `
             <article class="lead-card tilt-card motion-card">

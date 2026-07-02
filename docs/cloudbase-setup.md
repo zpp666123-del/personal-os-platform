@@ -49,7 +49,7 @@ profile_views:
 }
 ```
 
-线索由 `submitLead` 云函数写入，前端访客不能直接写 `leads`；主页拥有者可以更新自己的线索状态。
+线索由 `submitLead` 云函数写入，前端访客不能直接写 `leads`；主页拥有者可以更新自己的线索状态和备注。
 访问记录由 `trackVisit` 云函数写入，前端访客不能直接写 `profile_views`。
 
 ## 登录

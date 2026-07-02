@@ -1023,7 +1023,24 @@
       <main class="page">
         <section class="simple-hero" data-reveal><p class="eyebrow">Inbox</p><h1>联系线索收件箱。</h1><p>访客提交的面试、合作、请求联系方式都会进入这里。</p><div class="actions"><button class="btn ghost magnetic" type="button" data-action="export-leads" ${leads.length ? '' : 'disabled'}>导出 CSV</button></div></section>
         <section class="lead-list" data-reveal>
-          ${leads.length ? leads.map((l) => `<article class="lead-card tilt-card motion-card"><div><span>${esc(l.intent)} · ${esc(leadStatusLabel(l.status))}</span><h3>${esc(l.name)}</h3><p>${esc(l.email)}<br>${new Date(l.createdAt).toLocaleString()}</p><div class="lead-actions"><button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="new" ${(l.status || 'new') === 'new' ? 'disabled' : ''}>新线索</button><button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="contacted" ${l.status === 'contacted' ? 'disabled' : ''}>已联系</button><button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="archived" ${l.status === 'archived' ? 'disabled' : ''}>归档</button></div></div><p>${esc(l.message)}</p></article>`).join('') : '<article class="lead-card"><h3>暂无线索</h3><p>公开页联系表单提交后会出现在这里。</p></article>'}
+          ${leads.length ? leads.map((l) => `
+            <article class="lead-card tilt-card motion-card">
+              <div>
+                <span>${esc(l.intent)} · ${esc(leadStatusLabel(l.status))}</span>
+                <h3>${esc(l.name)}</h3>
+                <p>${esc(l.email)}<br>${new Date(l.createdAt).toLocaleString()}</p>
+                <div class="lead-actions">
+                  <button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="new" ${(l.status || 'new') === 'new' ? 'disabled' : ''}>新线索</button>
+                  <button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="contacted" ${l.status === 'contacted' ? 'disabled' : ''}>已联系</button>
+                  <button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="archived" ${l.status === 'archived' ? 'disabled' : ''}>归档</button>
+                </div>
+              </div>
+              <div class="lead-detail">
+                <p>${esc(l.message)}</p>
+                <label class="lead-note field full"><span>跟进备注</span><textarea data-lead-note maxlength="500" placeholder="记录下次跟进、报价、面试进度">${esc(l.note || '')}</textarea></label>
+                <button class="btn tiny" type="button" data-action="lead-note" data-lead-id="${esc(l.id)}">保存备注</button>
+              </div>
+            </article>`).join('') : '<article class="lead-card"><h3>暂无线索</h3><p>公开页联系表单提交后会出现在这里。</p></article>'}
         </section>
       </main>`);
   }
@@ -1243,7 +1260,7 @@
       return;
     }
     const row = currentProfile(loadDB());
-    const header = ['name', 'email', 'intent', 'message', 'status', 'createdAt'];
+    const header = ['name', 'email', 'intent', 'message', 'note', 'status', 'createdAt'];
     const lines = [
       header.map(csvCell).join(','),
       ...leads.map((lead) => header.map((key) => csvCell(key === 'createdAt' ? new Date(lead.createdAt).toISOString() : lead[key])).join(','))
@@ -1278,6 +1295,32 @@
       saveDB(db);
     }
     showToast('线索状态已更新');
+    render(false);
+  }
+
+  async function updateLeadNote(button) {
+    const leadId = button.dataset.leadId;
+    const input = button.closest('.lead-card')?.querySelector('[data-lead-note]');
+    if (!input) return;
+    const db = loadDB();
+    const lead = db.leads.find((item) => item.id === leadId);
+    if (!lead) return;
+    const oldNote = lead.note || '';
+    lead.note = String(input.value || '').trim().slice(0, 500);
+    if (runtime.useCloudBase && api()) {
+      try {
+        await api().updateLeadNote(leadId, lead.note);
+      } catch (err) {
+        lead.note = oldNote;
+        console.warn(err);
+        showToast('备注保存失败，请检查 leads 权限');
+        render(false);
+        return;
+      }
+    } else {
+      saveDB(db);
+    }
+    showToast('备注已保存');
     render(false);
   }
 
@@ -1391,6 +1434,7 @@
       email: lead.email,
       intent: lead.intent,
       message: lead.message,
+      note: '',
       status: 'new',
       createdAt: new Date().toISOString()
     });
@@ -1557,6 +1601,7 @@
     if (action === 'export-json') exportJSON();
     if (action === 'export-leads') exportLeadsCSV();
     if (action === 'lead-status') updateLeadStatus(actionEl.dataset.leadId, actionEl.dataset.status);
+    if (action === 'lead-note') updateLeadNote(actionEl);
     if (action === 'reset-demo') resetDemo();
     if (action === 'open-resume') openResume();
     if (action === 'close-resume') closeResume();

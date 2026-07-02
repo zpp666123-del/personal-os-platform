@@ -138,6 +138,7 @@
       email: row.visitorEmail || '',
       intent: row.intent || '',
       message: row.message || '',
+      note: row.note || '',
       status: row.status || 'new',
       createdAt: row.createdAt
     };
@@ -358,6 +359,18 @@
       .update({ status, updatedAt: new Date().toISOString() });
     if (result.code || result.updated === 0) throw new Error(result.message || 'CloudBase lead update was rejected.');
     return { id: leadId, status };
+  };
+
+  api.updateLeadNote = async function updateLeadNote(leadId, note) {
+    const safeNote = String(note || '').trim().slice(0, 500);
+    const { db } = await getCloudBase();
+    const user = await api.getUser();
+    if (!user) throw new Error('Please sign in first.');
+    const result = await db.collection('leads')
+      .where({ _id: leadId, ownerId: user.id })
+      .update({ note: safeNote, updatedAt: new Date().toISOString() });
+    if (result.code || result.updated === 0) throw new Error(result.message || 'CloudBase lead note update was rejected.');
+    return { id: leadId, note: safeNote };
   };
 
   window.AbilityCloudBaseAPI = api;

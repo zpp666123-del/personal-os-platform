@@ -581,6 +581,25 @@
     return `<div class="view-trend">${days.map((day) => `<div class="trend-day"><span style="height:${day.height}%"></span><b>${day.count}</b><small>${esc(day.label)}</small></div>`).join('')}</div>`;
   }
 
+  function sourceStats(db, profileId) {
+    const labels = { public_profile: '公开页', resume: '简历页' };
+    const counts = {};
+    (db.views || []).filter((view) => view.profileId === profileId).forEach((view) => {
+      const key = view.source || 'public_profile';
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const max = Math.max(1, ...Object.values(counts));
+    return Object.entries(counts).map(([source, count]) => ({
+      label: labels[source] || source,
+      count,
+      width: Math.max(8, Math.round((count / max) * 100))
+    }));
+  }
+
+  function sourceRows(rows) {
+    return `<div class="source-list">${rows.length ? rows.map((row) => `<div class="source-row"><span>${esc(row.label)}</span><i><b style="width:${row.width}%"></b></i><small>${row.count}</small></div>`).join('') : '<p class="muted">暂无来源数据</p>'}</div>`;
+  }
+
   function dashboardPage() {
     const db = loadDB();
     const row = currentProfile(db);
@@ -590,6 +609,8 @@
     const unreadLeads = newLeadCount(db, row.id);
     const viewsCount = (db.views || []).filter((v) => v.profileId === row.id).length;
     const trend = viewTrend(db, row.id);
+    const conversion = viewsCount ? Math.round((leadsCount / viewsCount) * 100) : 0;
+    const sources = sourceStats(db, row.id);
     const health = Math.min(100, 44 + p.projects.length * 6 + p.assets.length * 3 + (p.resume.summary ? 8 : 0) + (p.contact.note ? 6 : 0));
     const tasks = [
       ['完善个人身份', !!p.identity.title, '#/studio/identity'],
@@ -621,6 +642,7 @@
           <article class="dash-card tilt-card motion-card"><span class="pill">Build Log</span><div><strong>${esc(p.progress.current)} / ${esc(p.progress.total)}</strong><p>${esc(p.progress.label)}公开记录</p></div><a class="btn tiny" href="#/studio/hero">编辑记录</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Views</span><div><strong>${viewsCount}</strong><p>近 7 天公开页访问趋势</p>${trendBars(trend)}</div><a class="btn tiny" href="#/u/${esc(row.handle)}">查看公开页</a></article>
           <article class="dash-card tilt-card motion-card"><span class="pill">Leads</span><div><strong>${leadsCount}</strong><p>${unreadLeads ? `${unreadLeads} 条新线索待处理` : '访客联系线索'}</p></div><a class="btn tiny" href="#/inbox">查看收件箱</a></article>
+          <article class="dash-card tilt-card motion-card"><span class="pill">Conversion</span><div><strong>${conversion}%</strong><p>${leadsCount} 条线索 / ${viewsCount} 次访问</p>${sourceRows(sources)}</div><a class="btn tiny" href="#/inbox">处理线索</a></article>
         </section>
         <section class="section tight dashboard-operate" data-reveal>
           <article class="onboarding-panel tilt-card motion-card">

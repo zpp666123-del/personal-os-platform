@@ -44,7 +44,7 @@
     proof: { title: '新的能力证据', desc: '写下这项能力如何被证明。', tags: ['证据'] },
     projects: { title: '新的项目案例', role: '你的角色', summary: '一句话说明项目解决的问题。', result: '写下可验证结果。', tags: ['MVP'], url: '#', coverUrl: '' },
     assets: { type: 'website', label: '新的数字资产', value: '链接或账号', url: '#' },
-    posts: { title: '新的内容标题', meta: '类型 · 日期', views: '0', url: '#', coverUrl: '' },
+    posts: { title: '新的作品标题', type: '文章', summary: '一句话说明这项作品证明了什么。', meta: '平台 · 日期', views: '0', tags: ['作品'], url: '#', coverUrl: '' },
     'resume.education': { period: '2020 — 2024', school: '学校名称', degree: '本科', major: '专业', city: '城市', desc: '简要描述学习方向、项目或成果。' },
     'resume.work': { period: '2026 — 至今', company: '公司 / 项目', role: '职位 / 角色', location: '城市 / 远程', desc: '写下职责与关键工作。', result: '写下可验证结果。' },
     'resume.projectExperiences': { period: '2026', title: '项目名称', role: '你的角色', desc: '项目背景、问题和你的行动。', result: '结果和证据。', stack: ['Tech'] },
@@ -712,7 +712,7 @@
     ]));
 
     if (active === 'posts') return editorCard('作品资产', listEditor('posts', p.posts, [
-      ['title', '标题'], ['meta', '类型 / 日期'], ['views', '浏览量'], ['url', '链接', 'url'], ['coverUrl', '封面图片 URL', 'url']
+      ['title', '标题'], ['type', '类型'], ['summary', '作品摘要', 'textarea'], ['meta', '平台 / 日期'], ['views', '浏览量'], ['tags', '标签，逗号分隔', 'tags'], ['url', '链接', 'url'], ['coverUrl', '封面图片 URL', 'url']
     ]));
 
     return editorCard('联系、发布与导出', `
@@ -980,7 +980,7 @@
 
   function postCard(x) {
     const image = mediaImage(x.coverUrl, '');
-    return `<a class="post-card tilt-card motion-card" href="${esc(x.url || '#')}"><span class="post-thumb ${image ? 'has-image' : ''}">${image}</span><div><h3>${esc(x.title)}</h3><p>${esc(x.meta)}</p></div><span class="pill">${esc(x.views)}</span></a>`;
+    return `<a class="post-card tilt-card motion-card" href="${esc(x.url || '#')}"><span class="post-thumb ${image ? 'has-image' : ''}">${image}</span><div><small>${esc(x.type || '作品')}</small><h3>${esc(x.title)}</h3><p>${esc(x.summary || x.meta)}</p><div class="post-meta"><span>${esc(x.meta)}</span>${(x.tags||[]).map(tag).join('')}</div></div><span class="pill">${esc(x.views)}</span></a>`;
   }
 
   function resumeDrawer(p, row) {

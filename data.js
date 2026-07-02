@@ -128,9 +128,9 @@
       languages: ['中文：母语', '英文：工作沟通']
     },
     posts: [
-      { title: '如何用 AI Agent 提升个人生产力系统', meta: '方法论 · 2026-06-20', views: '1.2k', url: '#', coverUrl: '' },
-      { title: '从 0 到 1 搭建知识库问答系统的完整指南', meta: '技术实践 · 2026-06-12', views: '2.3k', url: '#', coverUrl: '' },
-      { title: 'B 端数据可视化设计的 5 个关键原则', meta: '设计方法 · 2026-05-28', views: '856', url: '#', coverUrl: '' }
+      { title: '如何用 AI Agent 提升个人生产力系统', type: '方法论', summary: '把个人工作流拆成可复用的输入、处理和输出系统。', meta: '文章 · 2026-06-20', views: '1.2k', tags: ['AI Agent', '效率'], url: '#', coverUrl: '' },
+      { title: '从 0 到 1 搭建知识库问答系统的完整指南', type: '技术实践', summary: '用真实项目拆解文档解析、检索、引用和权限控制。', meta: '文章 · 2026-06-12', views: '2.3k', tags: ['RAG', '教程'], url: '#', coverUrl: '' },
+      { title: 'B 端数据可视化设计的 5 个关键原则', type: '设计方法', summary: '总结指标口径、信息层级和角色视角对看板体验的影响。', meta: '文章 · 2026-05-28', views: '856', tags: ['Dashboard', '设计'], url: '#', coverUrl: '' }
     ],
     contact: {
       note: '求职、项目合作、内容共创、媒体采访都可以从这里开始。提交联系后，我可以按需要发送完整版 PDF 或进一步联系方式。',

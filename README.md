@@ -33,7 +33,7 @@ git commit -m "docs: update project notes"
 git push
 ```
 
-当前本地分支是 `codex/cloudbase-domestic-stack`。要上线到 GitHub Pages，去 GitHub 开一个 PR 合并到 `main`，合并后 `.github/workflows/pages.yml` 会自动发布静态站。
+当前本地分支是 `main`。推送到 GitHub 后，`.github/workflows/pages.yml` 会自动发布到 GitHub Pages。
 
 ## 本地运行
 
@@ -125,6 +125,8 @@ CloudBase 静态托管里把索引文档和错误文档都设为 `index.html`，
 ## 产品结构
 
 核心定位、7 个固定模块、组件/库选择见 [docs/product-positioning.md](./docs/product-positioning.md)。
+
+域名、DNS、CloudBase 正式入口和低成本上线方案见 [docs/domain-hosting-plan.md](./docs/domain-hosting-plan.md)。
 
 ## 后续升级路线
 

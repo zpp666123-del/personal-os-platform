@@ -1143,11 +1143,41 @@ body {
   .public-page { padding-top: 42px; }
 }
 @media (max-width: 620px) {
-  .brand-pill { width: 100%; justify-content: center; }
-  .nav-actions { flex-wrap: wrap; }
-  .top-cta { flex: 1; }
+  .top-nav { grid-template-columns: minmax(0,1fr) auto !important; gap: 8px !important; padding: 8px !important; border-radius: 26px !important; }
+  .top-nav .brand-pill { width: auto; max-width: none; min-height: 42px; justify-content: flex-start; }
+  .top-nav .brand-mark { flex: 0 0 36px; }
+  .top-nav .brand-status { display: none; }
+  .top-nav .brand-pill > span:not(.brand-mark) { min-width: 88px; }
+  .top-nav .nav-actions { width: auto; min-height: 42px; padding: 4px; gap: 6px; }
+  .top-nav .nav-pill { grid-column: 1 / -1; height: 42px; width: 100%; }
+  .top-nav .nav-pill a { padding: 9px 12px; font-size: 13px; }
+  .icon-btn, .top-cta { height: 36px; }
+  .top-cta { flex: 0 0 auto; padding-inline: 14px; }
   .form-grid, .form-grid.one, .contact-form, .resume-detail-grid, .resume-strip, .asset-grid, .project-grid, .proof-grid, .template-grid, .pricing-grid { grid-template-columns: 1fr !important; }
-  .public-title, .hero-title { font-size: clamp(46px, 16vw, 70px); }
+  .product-hero { padding: 34px 0 24px; gap: 28px; }
+  .product-hero .hero-title,
+  .public-title,
+  .hero-title { font-size: clamp(38px, 11.8vw, 48px) !important; line-height: 1.02; letter-spacing: -.045em; }
+  .mature-dashboard-hero h1,
+  .mature-studio-hero h1,
+  .mature-simple-hero h1 { font-size: clamp(38px, 11.8vw, 48px) !important; line-height: 1.02; letter-spacing: -.045em; }
+  .product-trust-row { margin-top: 22px; }
+  .product-console { padding: 18px; border-radius: 30px; }
+  .console-top { height: 42px; gap: 7px; }
+  .console-top span { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .public-hero { min-height: auto; gap: 30px; align-items: start; }
+  .public-meta { margin: 18px 0; }
+  .public-actions { margin-top: 22px; }
+  .public-orbit { min-height: auto; padding: 22px; border-radius: 34px; }
+  .public-orbit::before { width: 360px; height: 360px; }
+  .profile-card, .record-card { width: 100%; }
+  .profile-card h2 { font-size: 30px; }
+  .record-head h3 { font-size: 26px; }
+  .section-head { display: block; }
+  .reader-nav { gap: 8px; padding: 8px; }
+  .reader-cta { display: none; }
+  .reader-links a,
+  .reader-links button { padding: 9px 14px; }
   .print-sheet { padding: 28px; border-radius: 24px; }
   .print-head { display: grid; }
 }

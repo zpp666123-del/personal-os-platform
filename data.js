@@ -88,9 +88,9 @@
       body: '不是只放一份简历，也不是堆一堆社交链接。我希望把一个人的项目、经历、内容、资产和正在构建的过程放到同一个入口里。'
     },
     projects: [
-      { title: 'AI 知识库问答助手', summary: '面向企业文档的问答系统，支持多源检索、引用和权限控制。', tags: ['AI Agent', 'RAG', 'Next.js'], url: '#', coverUrl: '' },
-      { title: '数据中台可视化平台', summary: '从数据接入到指标看板的分析平台，支持自定义维度和多角色协作。', tags: ['Dashboard', 'React', 'Node.js'], url: '#', coverUrl: '' },
-      { title: '个人知识管理系统', summary: '沉淀项目、内容、灵感和复盘，支持标签、双链和智能搜索。', tags: ['Knowledge', 'MongoDB', 'Search'], url: '#', coverUrl: '' }
+      { title: 'AI 知识库问答助手', role: '产品设计 / 全栈实现', summary: '面向企业文档的问答系统，支持多源检索、引用和权限控制。', result: '把内部文档问答从人工检索缩短为带引用的即时回答。', tags: ['AI Agent', 'RAG', 'Next.js'], url: '#', coverUrl: '' },
+      { title: '数据中台可视化平台', role: '前端架构 / 数据产品', summary: '从数据接入到指标看板的分析平台，支持自定义维度和多角色协作。', result: '沉淀可复用指标看板，让运营、销售和管理者共用一套数据口径。', tags: ['Dashboard', 'React', 'Node.js'], url: '#', coverUrl: '' },
+      { title: '个人知识管理系统', role: '独立开发', summary: '沉淀项目、内容、灵感和复盘，支持标签、双链和智能搜索。', result: '把分散资料整理成可搜索、可复盘、可复用的个人知识资产。', tags: ['Knowledge', 'MongoDB', 'Search'], url: '#', coverUrl: '' }
     ],
     assets: [
       { type: 'github', label: 'GitHub', value: '@yourname', url: '#' },

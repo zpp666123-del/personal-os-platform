@@ -424,7 +424,9 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .project-cover.has-image::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,.72)); }
 .project-cover span { position: relative; z-index: 1; }
 .project-card h3 { font-size: 24px; letter-spacing: -.05em; margin: 18px 0 8px; }
+.project-card small { display: block; color: var(--blue); font-weight: 950; margin-bottom: 8px; }
 .project-card p { color: var(--muted); line-height: 1.7; }
+.project-result { border-left: 3px solid rgba(49,94,255,.45); padding-left: 10px; }
 
 .resume-module { border-radius: 58px; background: rgba(255,255,255,.66); border: 1px solid rgba(255,255,255,.86); box-shadow: var(--shadow-lg); padding: clamp(28px, 5vw, 66px); overflow: hidden; }
 .resume-overview { display: grid; grid-template-columns: minmax(300px, .85fr) minmax(0, 1.25fr); gap: clamp(24px, 4vw, 56px); align-items: stretch; }

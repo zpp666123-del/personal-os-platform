@@ -109,4 +109,4 @@ npx tcb fn deploy submitLead --force
 
 ## 存储
 
-当前 UI 还没有头像/PDF 上传控件，先不开存储写入。后续要做头像、项目封面、PDF 简历时，再用 CloudBase Storage。
+Studio 已支持头像、项目/作品封面和 PDF 简历上传，上传后草稿里保存 CloudBase `fileID`，公开页渲染时再换临时访问 URL。

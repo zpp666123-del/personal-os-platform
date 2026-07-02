@@ -42,7 +42,7 @@
 
   const emptyItem = {
     proof: { title: '新的能力证据', desc: '写下这项能力如何被证明。', tags: ['证据'] },
-    projects: { title: '新的项目案例', summary: '一句话说明项目解决的问题、你的角色和结果。', tags: ['MVP'], url: '#', coverUrl: '' },
+    projects: { title: '新的项目案例', role: '你的角色', summary: '一句话说明项目解决的问题。', result: '写下可验证结果。', tags: ['MVP'], url: '#', coverUrl: '' },
     assets: { type: 'website', label: '新的数字资产', value: '链接或账号', url: '#' },
     posts: { title: '新的内容标题', meta: '类型 · 日期', views: '0', url: '#', coverUrl: '' },
     'resume.education': { period: '2020 — 2024', school: '学校名称', degree: '本科', major: '专业', city: '城市', desc: '简要描述学习方向、项目或成果。' },
@@ -682,7 +682,7 @@
     if (active === 'projects') return editorCard('精选项目', `
       <h3>项目案例</h3>
       ${listEditor('projects', p.projects, [
-        ['title', '项目标题'], ['summary', '项目摘要', 'textarea'], ['tags', '标签，逗号分隔', 'tags'], ['url', '项目链接', 'url'], ['coverUrl', '封面图片 URL', 'url']
+        ['title', '项目标题'], ['role', '你的角色'], ['summary', '项目摘要', 'textarea'], ['result', '可验证结果', 'textarea'], ['tags', '标签，逗号分隔', 'tags'], ['url', '项目链接', 'url'], ['coverUrl', '封面图片 URL', 'url']
       ])}
       <h3>能力证据</h3>
       ${listEditor('proof', p.proof, [
@@ -975,7 +975,7 @@
 
   function projectCard(x, i) {
     const image = mediaImage(x.coverUrl, x.title);
-    return `<article class="project-card tilt-card motion-card"><div class="project-cover ${image ? 'has-image' : ''}">${image}<span>0${i+1} · ${esc(x.title)}</span></div><h3>${esc(x.title)}</h3><p>${esc(x.summary)}</p><div>${(x.tags||[]).map(tag).join('')}</div><a class="btn tiny ghost magnetic" href="${esc(x.url || '#')}">查看详情</a></article>`;
+    return `<article class="project-card tilt-card motion-card"><div class="project-cover ${image ? 'has-image' : ''}">${image}<span>0${i+1} · ${esc(x.title)}</span></div><h3>${esc(x.title)}</h3>${x.role ? `<small>${esc(x.role)}</small>` : ''}<p>${esc(x.summary)}</p>${x.result ? `<p class="project-result">${esc(x.result)}</p>` : ''}<div>${(x.tags||[]).map(tag).join('')}</div><a class="btn tiny ghost magnetic" href="${esc(x.url || '#')}">查看详情</a></article>`;
   }
 
   function postCard(x) {

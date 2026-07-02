@@ -967,6 +967,10 @@
     return db.leads.filter((l) => l.profileId === row.id).slice().reverse();
   }
 
+  function leadStatusLabel(status) {
+    return { new: '新线索', contacted: '已联系', archived: '已归档' }[status] || '新线索';
+  }
+
   function inboxPage() {
     const db = loadDB();
     const leads = currentLeads(db);
@@ -974,7 +978,7 @@
       <main class="page">
         <section class="simple-hero" data-reveal><p class="eyebrow">Inbox</p><h1>联系线索收件箱。</h1><p>访客提交的面试、合作、请求联系方式都会进入这里。</p><div class="actions"><button class="btn ghost magnetic" type="button" data-action="export-leads" ${leads.length ? '' : 'disabled'}>导出 CSV</button></div></section>
         <section class="lead-list" data-reveal>
-          ${leads.length ? leads.map((l) => `<article class="lead-card tilt-card motion-card"><div><span>${esc(l.intent)}</span><h3>${esc(l.name)}</h3><p>${esc(l.email)}<br>${new Date(l.createdAt).toLocaleString()}</p></div><p>${esc(l.message)}</p></article>`).join('') : '<article class="lead-card"><h3>暂无线索</h3><p>公开页联系表单提交后会出现在这里。</p></article>'}
+          ${leads.length ? leads.map((l) => `<article class="lead-card tilt-card motion-card"><div><span>${esc(l.intent)} · ${esc(leadStatusLabel(l.status))}</span><h3>${esc(l.name)}</h3><p>${esc(l.email)}<br>${new Date(l.createdAt).toLocaleString()}</p><div class="lead-actions"><button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="new" ${(l.status || 'new') === 'new' ? 'disabled' : ''}>新线索</button><button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="contacted" ${l.status === 'contacted' ? 'disabled' : ''}>已联系</button><button class="btn tiny" type="button" data-action="lead-status" data-lead-id="${esc(l.id)}" data-status="archived" ${l.status === 'archived' ? 'disabled' : ''}>归档</button></div></div><p>${esc(l.message)}</p></article>`).join('') : '<article class="lead-card"><h3>暂无线索</h3><p>公开页联系表单提交后会出现在这里。</p></article>'}
         </section>
       </main>`);
   }
@@ -1208,6 +1212,30 @@
     showToast('已导出 CSV');
   }
 
+  async function updateLeadStatus(leadId, status) {
+    if (!['new', 'contacted', 'archived'].includes(status)) return;
+    const db = loadDB();
+    const lead = db.leads.find((item) => item.id === leadId);
+    if (!lead) return;
+    const oldStatus = lead.status || 'new';
+    lead.status = status;
+    if (runtime.useCloudBase && api()) {
+      try {
+        await api().updateLeadStatus(leadId, status);
+      } catch (err) {
+        lead.status = oldStatus;
+        console.warn(err);
+        showToast('状态更新失败，请检查 leads 权限');
+        render(false);
+        return;
+      }
+    } else {
+      saveDB(db);
+    }
+    showToast('线索状态已更新');
+    render(false);
+  }
+
   function resetDemo() {
     if (runtime.useCloudBase) {
       showToast('CloudBase 模式下不会重置远程数据');
@@ -1318,6 +1346,7 @@
       email: lead.email,
       intent: lead.intent,
       message: lead.message,
+      status: 'new',
       createdAt: new Date().toISOString()
     });
     saveDB(db);
@@ -1482,6 +1511,7 @@
     if (action === 'move-list') moveList(actionEl.dataset.list, actionEl.dataset.index, actionEl.dataset.dir);
     if (action === 'export-json') exportJSON();
     if (action === 'export-leads') exportLeadsCSV();
+    if (action === 'lead-status') updateLeadStatus(actionEl.dataset.leadId, actionEl.dataset.status);
     if (action === 'reset-demo') resetDemo();
     if (action === 'open-resume') openResume();
     if (action === 'close-resume') closeResume();

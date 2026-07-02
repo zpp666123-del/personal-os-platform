@@ -513,6 +513,7 @@ label.field { display: grid; gap: 8px; color: #555963; font-size: 12px; font-wei
 .lead-card span { color: var(--blue); font-weight: 950; font-size: 12px; }
 .lead-card h3 { margin: 6px 0; font-size: 24px; letter-spacing: -.05em; }
 .lead-card p { color: var(--muted); line-height: 1.75; margin: 0; }
+.lead-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .login-card { width: min(560px, 100%); margin: 70px auto; padding: 34px; border-radius: 42px; background: rgba(255,255,255,.78); border: 1px solid rgba(255,255,255,.88); box-shadow: var(--shadow-lg); display: grid; gap: 16px; }
 .login-card h1 { font-size: 52px; line-height: .9; letter-spacing: -.08em; margin: 0; }
 .login-card p { color: var(--muted); line-height: 1.7; }

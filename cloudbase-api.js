@@ -315,5 +315,17 @@
     return (result.data || []).map(toLead);
   };
 
+  api.updateLeadStatus = async function updateLeadStatus(leadId, status) {
+    if (!['new', 'contacted', 'archived'].includes(status)) throw new Error('Invalid lead status.');
+    const { db } = await getCloudBase();
+    const user = await api.getUser();
+    if (!user) throw new Error('Please sign in first.');
+    const result = await db.collection('leads')
+      .where({ _id: leadId, ownerId: user.id })
+      .update({ status, updatedAt: new Date().toISOString() });
+    if (result.code || result.updated === 0) throw new Error(result.message || 'CloudBase lead update was rejected.');
+    return { id: leadId, status };
+  };
+
   window.AbilityCloudBaseAPI = api;
 }());

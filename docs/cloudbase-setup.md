@@ -35,12 +35,12 @@ leads:
 {
   "read": "doc.ownerId == auth.uid",
   "create": false,
-  "update": false,
+  "update": "doc.ownerId == auth.uid",
   "delete": false
 }
 ```
 
-线索由 `submitLead` 云函数写入，前端访客不能直接写 `leads`。
+线索由 `submitLead` 云函数写入，前端访客不能直接写 `leads`；主页拥有者可以更新自己的线索状态。
 
 ## 登录
 
